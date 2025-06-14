@@ -10,6 +10,8 @@ Plus ja wszystko ogarniałem tutaj na Windowsie, także jak robicie na innych sy
 
 Nie jestem też pewien czy nie będziecie musieli na nowo skompilować glfw.
 
+A i nie trzymajcie tego w ścieżce z polskimi znakami bo się skicha!
+
 ## Kompilacja
 
 1. Tworzymy folder `build` i wchodzimy do niego
@@ -22,7 +24,7 @@ $ cd build
 2. Generujemy projekt Ninją
 
 ```bash
-$ cmake -G Ninja .
+$ cmake -G Ninja ..
 ```
 
 3. Kompilujemy projekt

@@ -10,7 +10,10 @@ file(GLOB_RECURSE EXTERNAL_SOURCES
 
 set(SOURCES
     src/main.cpp
+    src/callbacks.cpp
+    src/renderer.cpp
     ${EXTERNAL_SOURCES}
+    ${INTERNAL_SOURCES}
 )
 configure_file(
     configuration/root_directory.h.in 

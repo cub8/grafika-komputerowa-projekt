@@ -47,5 +47,7 @@ public:
 
     void draw() { glDrawArrays(GL_TRIANGLES, 0, vertexCount); }
 
+    void drawLines() { glDrawArrays(GL_LINES, 0 ,vertexCount); }
+
     void bindVertexArray() { glBindVertexArray(VAO); }
 };

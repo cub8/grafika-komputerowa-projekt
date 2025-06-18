@@ -18,15 +18,14 @@
 #include "renderer.hpp"
 #include "shader.hpp"
 #include "texture.hpp"
+#include "world_constraints.hpp"
 
 class Program {
 public:
     GLFWwindow *window;
-    std::optional<Shader> boxShader;
-    std::optional<Shader> planeShader;
+    std::optional<Shader> boxShader, planeShader, axisShader;
     std::optional<Texture> texture1, texture2, texture3;
-    std::optional<Object> box;
-    std::optional<Object> plane;
+    std::optional<Object> box, plane, axis;
     std::array<glm::vec3, 10> cubePositions;
     Camera camera;
 
@@ -53,7 +52,7 @@ public:
         glfwMakeContextCurrent(window);
         glfwSetFramebufferSizeCallback(window, Callbacks::framebufferSizeCallback);
         // glfwSetCursorPosCallback(window, Callbacks::mouseCallback);
-        // glfwSetScrollCallback(window, Callbacks::scrollCallback);
+        glfwSetScrollCallback(window, Callbacks::scrollCallback);
         glfwSetWindowUserPointer(window, this);
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
@@ -68,7 +67,7 @@ public:
         initTextures();
         initObjects();
 
-        camera = Camera(glm::vec3(0.0f, 5.0f, 5.0f), 0.0f, -30.0f);
+        camera = Camera(glm::vec3(0.0f, 10.0f, 0.0f), -90.0f, -45.0f);
     }
 
     ~Program() { glfwTerminate(); }
@@ -86,6 +85,7 @@ public:
 
             Renderer::renderBoxes(this);
             Renderer::renderPlane(this);
+            Renderer::renderAxis(this);
 
             glfwSwapBuffers(window);
             glfwPollEvents();
@@ -102,6 +102,12 @@ public:
         if (!planeShader)
             throw std::runtime_error("Plane Shader not initialized");
         return *planeShader;
+    }
+
+    Shader &getAxisShader() {
+        if (!axisShader)
+            throw std::runtime_error("Plane Shader not initialized");
+        return *axisShader;
     }
 
     Texture &getTexture1() {
@@ -134,6 +140,12 @@ public:
         return *plane;
     }
 
+    Object &getAxis() {
+        if (!axis)
+            throw std::runtime_error("Axis not initialized");
+        return *axis;
+    }
+
     Camera &getCamera() {
         return camera;
     }
@@ -142,6 +154,7 @@ private:
     void initShaders() {
         boxShader.emplace("shaders/box.vs", "shaders/box.fs");
         planeShader.emplace("shaders/plane.vs", "shaders/plane.fs");
+        axisShader.emplace("shaders/axis.vs", "shaders/axis.fs");
     }
 
     void initTextures() {
@@ -152,7 +165,7 @@ private:
         getBoxShader().use();
         getBoxShader().setInt("texture1", 0);
         getBoxShader().setInt("texture2", 1);
-        
+
         getPlaneShader().use();
         getPlaneShader().setInt("Tex", 0);
 
@@ -170,17 +183,34 @@ private:
         auto attributes = std::vector<int>{ 3, 2 };
         box.emplace(vertices, sizeof(vertices), attributes);
 
-        const float planeVertices[] = {
-            // positions          // texCoords
-            -1.0f, 0.0f,  1.0f,   0.0f, 1.0f,
-            -1.0f, 0.0f, -1.0f,   0.0f, 0.0f,
-            1.0f, 0.0f, -1.0f,   1.0f, 0.0f,
+        const float width = WorldConstraints::ASPECT_RATIO;
 
-            1.0f, 0.0f, -1.0f,   1.0f, 0.0f,
-            -1.0f, 0.0f,  1.0f,   0.0f, 1.0f,
-            1.0f, 0.0f,  1.0f,   1.0f, 1.0f,
+        const float planeVertices[] = {
+            // positions                   // texCoords
+            -width, 0.0f,  1.0f,          0.0f, 1.0f,
+            -width, 0.0f, -1.0f,          0.0f, 0.0f,
+             width, 0.0f, -1.0f,          1.0f, 0.0f,
+
+             width, 0.0f, -1.0f,          1.0f, 0.0f,
+            -width, 0.0f,  1.0f,          0.0f, 1.0f,
+             width, 0.0f,  1.0f,          1.0f, 1.0f,
         };
         plane.emplace(planeVertices, sizeof(planeVertices), attributes);
+
+        const float axisVertices[] = {
+            // positions          // colors (RGB)
+            0.0f, 0.0f, 0.0f,    1.0f, 0.0f, 0.0f,   // X-axis start (Red)
+            1.0f, 0.0f, 0.0f,    1.0f, 0.0f, 0.0f,   // X-axis end
+
+            0.0f, 0.0f, 0.0f,    0.0f, 1.0f, 0.0f,   // Y-axis start (Green)
+            0.0f, 1.0f, 0.0f,    0.0f, 1.0f, 0.0f,   // Y-axis end
+
+            0.0f, 0.0f, 0.0f,    0.0f, 0.0f, 1.0f,   // Z-axis start (Blue)
+            0.0f, 0.0f, 1.0f,    0.0f, 0.0f, 1.0f    // Z-axis end
+        };
+
+        auto axisAttributes = std::vector<int>{ 3, 3 };
+        axis.emplace(axisVertices, sizeof(axisVertices), axisAttributes);
     }
 
     void processInput(GLFWwindow *window) {

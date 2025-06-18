@@ -7,6 +7,7 @@ class Program;
 namespace Renderer {
     void renderBoxes(Program *program);
     void renderPlane(Program *program);
+    void renderAxis(Program *program);
     glm::mat4 buildProjectionMatrix(Program *program);
     void cleanUp();
 }

@@ -72,17 +72,7 @@ public:
         if (direction == RIGHT)
             Position += flatRight * velocity;
 
-        if (Position.z < WorldConstraints::LEFT)
-            Position.z = WorldConstraints::LEFT;
-
-        if (Position.z > WorldConstraints::RIGHT)
-            Position.z = WorldConstraints::RIGHT;
-        
-        if (Position.x < WorldConstraints::BOTTOM)
-            Position.x = WorldConstraints::BOTTOM;
-        
-        if (Position.x > WorldConstraints::TOP)
-            Position.x = WorldConstraints::TOP;
+        validateCameraPosition();
     }
 
     // processes input received from a mouse input system. Expects the offset value in both the x and y direction.
@@ -135,5 +125,21 @@ private:
         // also re-calculate the Right and Up vector
         Right = glm::normalize(glm::cross(Front, WorldUp));  // normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
         Up = glm::normalize(glm::cross(Right, Front));
+    }
+
+    void validateCameraPosition() {
+        std::cout << "Position: (x=" << Position.x << ", y=" << Position.y << ", z=" << Position.z << ")" << std::endl;
+
+        if (Position.x < WorldConstraints::LEFT)
+            Position.x = WorldConstraints::LEFT;
+
+        if (Position.x > WorldConstraints::RIGHT)
+            Position.x = WorldConstraints::RIGHT;
+        
+        if (Position.z > WorldConstraints::BOTTOM)
+            Position.z = WorldConstraints::BOTTOM;
+        
+        if (Position.z < WorldConstraints::TOP)
+            Position.z = WorldConstraints::TOP;
     }
 };

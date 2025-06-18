@@ -44,10 +44,27 @@ namespace Renderer {
 
         program->getPlane().bindVertexArray();
         auto model = glm::mat4(1.0f);
-        auto modelScale = glm::vec3(WorldConstraints::SCALE_X, 1.0f, WorldConstraints::SCALE_Z);
+        auto modelScale = glm::vec3(WorldConstraints::SCALE, 1.0f, WorldConstraints::SCALE);
         model = glm::scale(model, modelScale);
         program->getPlaneShader().setMat4("model", model);
         program->getPlane().draw();
+
+        cleanUp();
+    }
+
+    void renderAxis(Program *program) {
+        program->getAxisShader().use();
+
+        auto view = program->getCamera().GetViewMatrix();
+        program->getAxisShader().setMat4("view", view);
+        program->getAxisShader().setMat4("projection", buildProjectionMatrix(program));
+        program->getAxis().bindVertexArray();
+        
+        auto model = glm::mat4(1.0f);
+        auto modelScale = glm::vec3(30.0f, 30.0f, 30.0f);
+        model = glm::scale(model, modelScale);
+        program->getAxisShader().setMat4("model", model);
+        program->getAxis().drawLines();
 
         cleanUp();
     }

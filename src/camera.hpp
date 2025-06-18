@@ -4,6 +4,10 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <iostream>
+
+#include "world_constraints.hpp"
+
 // Defines several possible options for camera movement. Used as abstraction to stay away from window-system specific input methods
 enum Camera_Movement {
     FORWARD,
@@ -56,14 +60,29 @@ public:
     // processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
     void ProcessKeyboard(Camera_Movement direction, float deltaTime) {
         float velocity = MovementSpeed * deltaTime;
+        glm::vec3 flatFront = glm::normalize(glm::vec3(Front.x, 0.0f, Front.z));
+        glm::vec3 flatRight = glm::normalize(glm::vec3(Right.x, 0.0f, Right.z));
+
         if (direction == FORWARD)
-            Position += Front * velocity;
+            Position += flatFront * velocity;
         if (direction == BACKWARD)
-            Position -= Front * velocity;
+            Position -= flatFront * velocity;
         if (direction == LEFT)
-            Position -= Right * velocity;
+            Position -= flatRight * velocity;
         if (direction == RIGHT)
-            Position += Right * velocity;
+            Position += flatRight * velocity;
+
+        if (Position.z < WorldConstraints::LEFT)
+            Position.z = WorldConstraints::LEFT;
+
+        if (Position.z > WorldConstraints::RIGHT)
+            Position.z = WorldConstraints::RIGHT;
+        
+        if (Position.x < WorldConstraints::BOTTOM)
+            Position.x = WorldConstraints::BOTTOM;
+        
+        if (Position.x > WorldConstraints::TOP)
+            Position.x = WorldConstraints::TOP;
     }
 
     // processes input received from a mouse input system. Expects the offset value in both the x and y direction.

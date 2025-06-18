@@ -25,9 +25,9 @@ public:
 
         if (data) {
             const int format = getFormat(nrChannels);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, format,
+            glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format,
                 GL_UNSIGNED_BYTE, data);
-            glGenerateMipmap(GL_TEXTURE_2D);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // No mipmap
         }
         else {
             std::cout << "Failed to load texture" << std::endl;

@@ -9,6 +9,7 @@
 #include "program.hpp"
 #include "renderer.hpp"
 #include "shader.hpp"
+#include "world_constraints.hpp"
 
 namespace Renderer {
     void renderBoxes(Program *program) {
@@ -34,16 +35,17 @@ namespace Renderer {
     }
 
     void renderPlane(Program *program) {
-        program->getTexture1().bindTexture(GL_TEXTURE0);
+        program->getTexture3().bindTexture(GL_TEXTURE0);
         program->getPlaneShader().use();
 
-        glm::mat4 view = program->getCamera().GetViewMatrix();
+        auto view = program->getCamera().GetViewMatrix();
         program->getPlaneShader().setMat4("view", view);
         program->getPlaneShader().setMat4("projection", buildProjectionMatrix(program));
 
         program->getPlane().bindVertexArray();
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::scale(model, glm::vec3(9.0f, 1.0f, 8.0f));
+        auto model = glm::mat4(1.0f);
+        auto modelScale = glm::vec3(WorldConstraints::SCALE_X, 1.0f, WorldConstraints::SCALE_Z);
+        model = glm::scale(model, modelScale);
         program->getPlaneShader().setMat4("model", model);
         program->getPlane().draw();
 

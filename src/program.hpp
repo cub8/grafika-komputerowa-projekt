@@ -24,7 +24,7 @@ public:
     GLFWwindow *window;
     std::optional<Shader> boxShader;
     std::optional<Shader> planeShader;
-    std::optional<Texture> texture1, texture2;
+    std::optional<Texture> texture1, texture2, texture3;
     std::optional<Object> box;
     std::optional<Object> plane;
     std::array<glm::vec3, 10> cubePositions;
@@ -52,8 +52,8 @@ public:
 
         glfwMakeContextCurrent(window);
         glfwSetFramebufferSizeCallback(window, Callbacks::framebufferSizeCallback);
-        glfwSetCursorPosCallback(window, Callbacks::mouseCallback);
-        glfwSetScrollCallback(window, Callbacks::scrollCallback);
+        // glfwSetCursorPosCallback(window, Callbacks::mouseCallback);
+        // glfwSetScrollCallback(window, Callbacks::scrollCallback);
         glfwSetWindowUserPointer(window, this);
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
@@ -68,7 +68,7 @@ public:
         initTextures();
         initObjects();
 
-        camera = Camera(glm::vec3(0.0f, 3.0f, 5.0f), YAW, -45.0f);
+        camera = Camera(glm::vec3(0.0f, 5.0f, 5.0f), 0.0f, -30.0f);
     }
 
     ~Program() { glfwTerminate(); }
@@ -81,7 +81,7 @@ public:
 
             processInput(window);
 
-            glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             Renderer::renderBoxes(this);
@@ -116,6 +116,12 @@ public:
         return *texture2;
     }
 
+    Texture &getTexture3() {
+        if (!texture3)
+            throw std::runtime_error("Texture2 not initialized");
+        return *texture3;
+    }
+
     Object &getObject() {
         if (!box)
             throw std::runtime_error("Object not initialized");
@@ -141,13 +147,14 @@ private:
     void initTextures() {
         texture1.emplace("textures/container.jpg");
         texture2.emplace("textures/awesomeface.png");
+        texture3.emplace("textures/europe_map.png");
 
         getBoxShader().use();
         getBoxShader().setInt("texture1", 0);
         getBoxShader().setInt("texture2", 1);
         
         getPlaneShader().use();
-        getPlaneShader().setInt("texture1", 0);
+        getPlaneShader().setInt("Tex", 0);
 
         glUseProgram(0);
     }
@@ -164,13 +171,14 @@ private:
         box.emplace(vertices, sizeof(vertices), attributes);
 
         const float planeVertices[] = {
-          -1.0f, 0.0f,  1.0f, 0.0f, 1.0f,
-          -1.0f, 0.0f, -1.0f, 0.0f, 0.0f,
-          1.0f, 0.0f,  -1.0f, 1.0f, 0.0f,
+            // positions          // texCoords
+            -1.0f, 0.0f,  1.0f,   0.0f, 1.0f,
+            -1.0f, 0.0f, -1.0f,   0.0f, 0.0f,
+            1.0f, 0.0f, -1.0f,   1.0f, 0.0f,
 
-          1.0f, 0.0f,  -1.0f, 1.0f, 0.0f,
-          -1.0f, 0.0f,  1.0f, 0.0f, 1.0f,
-          1.0f, 0.0f,   1.0f, 1.0f, 1.0f,
+            1.0f, 0.0f, -1.0f,   1.0f, 0.0f,
+            -1.0f, 0.0f,  1.0f,   0.0f, 1.0f,
+            1.0f, 0.0f,  1.0f,   1.0f, 1.0f,
         };
         plane.emplace(planeVertices, sizeof(planeVertices), attributes);
     }

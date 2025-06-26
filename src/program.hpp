@@ -19,18 +19,32 @@
 #include "shader.hpp"
 #include "texture.hpp"
 #include "world_constraints.hpp"
+#include "model.hpp"
+
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+#include <string>
+#include <filesystem/filesystem.h>
+#include <stb_image/stb_image.h>
+
+// to limit FPS
+#include <chrono>
+#include <thread>
+
 
 class Program {
 public:
     GLFWwindow *window;
-    std::optional<Shader> boxShader, planeShader, axisShader;
+    std::optional<Shader> boxShader, planeShader, axisShader, modelShader;
     std::optional<Texture> texture1, texture2, texture3;
     std::optional<Object> box, plane, axis;
+    std::optional<Model> powerPlantModel;
     std::array<glm::vec3, 10> cubePositions;
     Camera camera;
 
-    const unsigned int SCR_WIDTH = 800;
-    const unsigned int SCR_HEIGHT = 600;
+    const unsigned int SCR_WIDTH = 1800;
+    const unsigned int SCR_HEIGHT = 1000;
     float lastX = SCR_WIDTH / 2.0f;
     float lastY = SCR_HEIGHT / 2.0f;
     bool firstMouse = true;
@@ -72,11 +86,26 @@ public:
 
     ~Program() { glfwTerminate(); }
 
+
+    void limitFPS(float targetFPS) {
+    static float lastTime = 0.0f;
+    float currentTime = static_cast<float>(glfwGetTime());
+    float deltaTime = currentTime - lastTime;
+
+    if (deltaTime < (1.0f / targetFPS)) {
+        std::this_thread::sleep_for(std::chrono::duration<float>(1.0f / targetFPS - deltaTime));
+    }
+    lastTime = static_cast<float>(glfwGetTime());
+}
+
+
     void renderLoop() {
         while (!glfwWindowShouldClose(window)) {
             float currentFrame = static_cast<float>(glfwGetTime());
             deltaTime = currentFrame - lastFrame;
             lastFrame = currentFrame;
+
+            glfwSwapInterval(1);
 
             processInput(window);
 
@@ -87,8 +116,14 @@ public:
             Renderer::renderPlane(this);
             Renderer::renderAxis(this);
 
+            Renderer::renderModel(this, *powerPlantModel, glm::vec3(22.0f, 0.0f, 4.0f), glm::vec3(0.003f));
+
+            Renderer::renderModel(this, *powerPlantModel, glm::vec3(22.0f, 0.0f, 4.0f), glm::vec3(0.003f));
+
             glfwSwapBuffers(window);
             glfwPollEvents();
+
+            limitFPS(60);
         }
     }
 
@@ -150,11 +185,18 @@ public:
         return camera;
     }
 
+    Shader& getModelShader() {
+    if (!modelShader)
+        throw std::runtime_error("Model Shader not initialized");
+    return *modelShader;
+    }
+
 private:
     void initShaders() {
         boxShader.emplace("shaders/box.vs", "shaders/box.fs");
         planeShader.emplace("shaders/plane.vs", "shaders/plane.fs");
         axisShader.emplace("shaders/axis.vs", "shaders/axis.fs");
+        modelShader.emplace("shaders/model.vs", "shaders/model.fs");
     }
 
     void initTextures() {
@@ -172,13 +214,37 @@ private:
         glUseProgram(0);
     }
 
+glm::vec3 geoToWorld(float latitude, float longitude) {
+    // Zakresy geograficzne
+    const float MIN_LONG = -25.0f;
+    const float MAX_LONG = 45.0f;
+
+    const float MIN_LAT = 35.0f;
+    const float MAX_LAT = 71.0f;
+
+    // Zakresy świata
+    const float WORLD_MIN_X = -22.0f;
+    const float WORLD_MAX_X =  30.0f;
+
+    const float WORLD_MIN_Z = -14.0f;
+    const float WORLD_MAX_Z =  14.0f;
+
+    // MAPPING longitude → X
+    float x = WORLD_MIN_X + (longitude - MIN_LONG) / (MAX_LONG - MIN_LONG) * (WORLD_MAX_X - WORLD_MIN_X);
+
+    // MAPPING latitude → Z (odwrócony: większa szer. to mniejszy Z)
+    float z = WORLD_MIN_Z + (MAX_LAT - latitude) / (MAX_LAT - MIN_LAT) * (WORLD_MAX_Z - WORLD_MIN_Z);
+
+
+    return glm::vec3(x, 0.0f, z);
+}
+
+
+
     void initObjects() {
-        cubePositions = {
-            glm::vec3(0.0f, 0.0f, 0.0f),    glm::vec3(2.0f, 5.0f, -15.0f),
-            glm::vec3(-1.5f, -2.2f, -2.5f), glm::vec3(-3.8f, -2.0f, -12.3f),
-            glm::vec3(2.4f, -0.4f, -3.5f),  glm::vec3(-1.7f, 3.0f, -7.5f),
-            glm::vec3(1.3f, -2.0f, -2.5f),  glm::vec3(1.5f, 2.0f, -2.5f),
-            glm::vec3(1.5f, 0.2f, -1.5f),   glm::vec3(-1.3f, 1.0f, -1.5f) };
+
+        powerPlantModel.emplace("../models/cooling_tower.obj");
+
 
         auto attributes = std::vector<int>{ 3, 2 };
         box.emplace(vertices, sizeof(vertices), attributes);

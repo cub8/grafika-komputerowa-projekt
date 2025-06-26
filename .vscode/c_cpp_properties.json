@@ -1,19 +1,23 @@
 {
-  "configurations": [
-    {
-      "name": "Win32",
-        "includePath": [
-          "${workspaceFolder}/build/configuration",
-          "${workspaceFolder}/src",
-          "${workspaceFolder}/external"
-        ],
-      "defines": [],
-      "windowsSdkVersion": "10.0.19041.0",
-      "compilerPath": "C:/msys64/ucrt64/bin/g++.exe",
-      "cStandard": "c11",
-      "cppStandard": "c++17",
-      "intelliSenseMode": "windows-gcc-x64"
-    }
-  ],
-  "version": 4
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/build/configuration",
+                "${workspaceFolder}/src",
+                "${workspaceFolder}/external",
+                "${workspaceFolder}/external/glad",
+                "${workspaceFolder}/external/assimp/include/assimp",
+                "${workspaceFolder}/external/assimp/include"
+            ],
+            "defines": [],
+            "windowsSdkVersion": "10.0.19041.0",
+            "compilerPath": "C:/msys64/ucrt64/bin/g++.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "windows-gcc-x64",
+            "configurationProvider": "ms-vscode.cmake-tools"
+        }
+    ],
+    "version": 4
 }

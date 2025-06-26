@@ -12,6 +12,7 @@ set(SOURCES
     src/main.cpp
     src/callbacks.cpp
     src/renderer.cpp
+    src/model.cpp
     ${EXTERNAL_SOURCES}
     ${INTERNAL_SOURCES}
 )
@@ -23,14 +24,24 @@ configure_file(
 # Include directories
 include_directories(
     ${CMAKE_BINARY_DIR}/configuration
-    external
+    external 
     src
+    external/assimp/include
 )
 
 # Link GLFW (static)
-link_directories(${CMAKE_SOURCE_DIR}/external/GLFW)
+link_directories(
+    ${CMAKE_SOURCE_DIR}/external/GLFW
+    ${CMAKE_SOURCE_DIR}/external/assimp/lib
+    )
 
 add_executable(main ${SOURCES})
 
 # Link dependencies
-target_link_libraries(main glfw3 gdi32)
+target_link_libraries(main glfw3 gdi32 assimp)
+
+add_custom_command(TARGET main POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    ${CMAKE_SOURCE_DIR}/external/assimp/bin/libassimp-6.dll
+    $<TARGET_FILE_DIR:main>
+)

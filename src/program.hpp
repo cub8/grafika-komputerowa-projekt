@@ -43,8 +43,12 @@ public:
     std::array<glm::vec3, 10> cubePositions;
     Camera camera;
 
-    const unsigned int SCR_WIDTH = 1800;
-    const unsigned int SCR_HEIGHT = 1000;
+    std::vector<glm::vec3> plantPositions;
+
+    std::optional<int> selectedPlantIndex;
+
+    const unsigned int SCR_WIDTH = 1200;
+    const unsigned int SCR_HEIGHT = 800;
     float lastX = SCR_WIDTH / 2.0f;
     float lastY = SCR_HEIGHT / 2.0f;
     bool firstMouse = true;
@@ -68,7 +72,9 @@ public:
         // glfwSetCursorPosCallback(window, Callbacks::mouseCallback);
         glfwSetScrollCallback(window, Callbacks::scrollCallback);
         glfwSetWindowUserPointer(window, this);
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
+        glfwSetMouseButtonCallback(window, Callbacks::mouseButtonCallback);
 
         if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
             std::cout << "Failed to initialize GLAD" << std::endl;
@@ -80,6 +86,15 @@ public:
         initShaders();
         initTextures();
         initObjects();
+
+        // initialize plant positions
+        plantPositions = {
+            {22.0f, 0.0f, 4.0f}, // Zaporoze (Ukraine)
+            {3.0f, 0.0f, -10.0f}, // Forsmark (Sweden)
+            {-10.0f, 0.0f, 1.5f}, // Gravelines (France)
+            {6.0f, 0.0f, 4.0f}, // Mochovce (Slovakia)
+            {-14.0f, 0.0f, 12.0f} // Cofrentes (Spain)
+        };
 
         camera = Camera(glm::vec3(0.0f, 10.0f, 0.0f), -90.0f, -45.0f);
     }
@@ -112,13 +127,24 @@ public:
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            Renderer::renderBoxes(this);
+            // Renderer::renderBoxes(this);
             Renderer::renderPlane(this);
             Renderer::renderAxis(this);
 
-            Renderer::renderModel(this, *powerPlantModel, glm::vec3(22.0f, 0.0f, 4.0f), glm::vec3(0.003f));
-
-            Renderer::renderModel(this, *powerPlantModel, glm::vec3(22.0f, 0.0f, 4.0f), glm::vec3(0.003f));
+            for (int i = 0; i < plantPositions.size(); ++i) {
+                auto& pos = plantPositions[i];
+                
+                if (selectedPlantIndex && *selectedPlantIndex == i) {
+                    getModelShader().use();
+                    getModelShader().setVec3("overrideColor1", glm::vec3(1.f, 0.f, 0.f)); // red color if selected
+                }
+                else {
+                    getModelShader().use();
+                    getModelShader().setVec3("overrideColor1", glm::vec3(-1.f)); // no color
+                }
+                
+                Renderer::renderModel(this, *powerPlantModel, pos, glm::vec3(0.003f));
+            }
 
             glfwSwapBuffers(window);
             glfwPollEvents();
@@ -191,6 +217,12 @@ public:
     return *modelShader;
     }
 
+    float getAspectRatio() const { return (float)SCR_WIDTH / (float)SCR_HEIGHT; }
+    float getFov() const { return camera.Zoom; }
+
+
+
+
 private:
     void initShaders() {
         boxShader.emplace("shaders/box.vs", "shaders/box.fs");
@@ -213,31 +245,6 @@ private:
 
         glUseProgram(0);
     }
-
-glm::vec3 geoToWorld(float latitude, float longitude) {
-    // Zakresy geograficzne
-    const float MIN_LONG = -25.0f;
-    const float MAX_LONG = 45.0f;
-
-    const float MIN_LAT = 35.0f;
-    const float MAX_LAT = 71.0f;
-
-    // Zakresy świata
-    const float WORLD_MIN_X = -22.0f;
-    const float WORLD_MAX_X =  30.0f;
-
-    const float WORLD_MIN_Z = -14.0f;
-    const float WORLD_MAX_Z =  14.0f;
-
-    // MAPPING longitude → X
-    float x = WORLD_MIN_X + (longitude - MIN_LONG) / (MAX_LONG - MIN_LONG) * (WORLD_MAX_X - WORLD_MIN_X);
-
-    // MAPPING latitude → Z (odwrócony: większa szer. to mniejszy Z)
-    float z = WORLD_MIN_Z + (MAX_LAT - latitude) / (MAX_LAT - MIN_LAT) * (WORLD_MAX_Z - WORLD_MIN_Z);
-
-
-    return glm::vec3(x, 0.0f, z);
-}
 
 
 

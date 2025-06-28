@@ -69,6 +69,30 @@ namespace Renderer {
         cleanUp();
     }
 
+
+    void renderModel(Program* program, Model& modelObject, glm::vec3 position, glm::vec3 scale) {
+
+        Shader& shader = program->getModelShader();
+        shader.use();
+
+        glm::mat4 modelMatrix = glm::mat4(1.0f);
+        modelMatrix = glm::translate(modelMatrix, position);
+        modelMatrix = glm::scale(modelMatrix, scale);
+        shader.setMat4("model", modelMatrix);
+
+        // View + projection
+        glm::mat4 view = program->getCamera().GetViewMatrix();
+        glm::mat4 projection = buildProjectionMatrix(program);
+        shader.setMat4("view", view);
+        shader.setMat4("projection", projection);
+
+        modelObject.Draw(shader);
+
+        cleanUp();
+    }   
+
+
+
     glm::mat4 buildProjectionMatrix(Program *program) {
         const float SCR_WIDTH = static_cast<float>(program->SCR_WIDTH);
         const float SCR_HEIGHT = static_cast<float>(program->SCR_HEIGHT);

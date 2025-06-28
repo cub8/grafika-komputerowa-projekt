@@ -128,7 +128,7 @@ private:
     }
 
     void validateCameraPosition() {
-        std::cout << "Position: (x=" << Position.x << ", y=" << Position.y << ", z=" << Position.z << ")" << std::endl;
+        // std::cout << "Position: (x=" << Position.x << ", y=" << Position.y << ", z=" << Position.z << ")" << std::endl;
 
         if (Position.x < WorldConstraints::LEFT)
             Position.x = WorldConstraints::LEFT;

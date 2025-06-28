@@ -24,7 +24,7 @@ public:
     void initialize();
     void emit(const glm::vec3& sourcePos, int count);
     void update(float dt);
-    void draw(const glm::mat4& view, const glm::mat4& proj);
+    void draw();
 
 private:
     std::vector<Particle> particles;

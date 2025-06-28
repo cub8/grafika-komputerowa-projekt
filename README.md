@@ -12,6 +12,30 @@ Nie jestem też pewien czy nie będziecie musieli na nowo skompilować glfw.
 
 A i nie trzymajcie tego w ścieżce z polskimi znakami bo się skicha!
 
+## Kompilacja assimp
+
+Assimp jest bardzo niegrzeczną biblioteką i w związku z tym trzeba ją ręcznie skompilować. Pff.
+
+### Pobierz repozytorium
+
+Pamiętaj tylko, żeby je pobierać w innym folderze niż tym od projektu.
+
+```bash
+$ git clone https://github.com/assimp/assimp.git
+```
+
+### Budujemy je
+
+```bash
+$ cd assimp
+$ cmake -G Ninja .
+$ cmake --build .
+```
+
+### Przekopiuj .dll
+
+Interesują nas tylko dwa pliki: `lib/libassimp.dll.a` oraz `bin/libassimp-6.dll`. Wybieramy je kompujemy do `external/assimp/lib` oraz `external/assimp/bin`,
+
 ## Kompilacja
 
 1. Tworzymy folder `build` i wchodzimy do niego

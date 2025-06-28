@@ -32,16 +32,20 @@
 #include <chrono>
 #include <thread>
 
+#include "particle_system.hpp"
+
 
 class Program {
 public:
     GLFWwindow *window;
-    std::optional<Shader> boxShader, planeShader, axisShader, modelShader;
-    std::optional<Texture> texture1, texture2, texture3;
+    std::optional<Shader> boxShader, planeShader, axisShader, modelShader, particleShader;
+    std::optional<Texture> texture1, texture2, texture3, psTexture;
     std::optional<Object> box, plane, axis;
     std::optional<Model> powerPlantModel;
     std::array<glm::vec3, 10> cubePositions;
     Camera camera;
+
+    ParticleSystem particleSystem; 
 
     std::vector<glm::vec3> plantPositions;
 
@@ -82,10 +86,14 @@ public:
         }
 
         glEnable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         initShaders();
         initTextures();
         initObjects();
+
+        particleSystem.initialize();
 
         // initialize plant positions
         plantPositions = {
@@ -115,6 +123,8 @@ public:
 
 
     void renderLoop() {
+        std::cout << "Render loop started\n";
+
         while (!glfwWindowShouldClose(window)) {
             float currentFrame = static_cast<float>(glfwGetTime());
             deltaTime = currentFrame - lastFrame;
@@ -146,12 +156,42 @@ public:
                 Renderer::renderModel(this, *powerPlantModel, pos, glm::vec3(0.003f));
             }
 
+            // PARTICLES
+
+            glm::mat4 projection = glm::perspective(
+                glm::radians(camera.Zoom),
+                getAspectRatio(),
+                0.1f,
+                1000.0f
+            );
+            glm::mat4 view = camera.GetViewMatrix();
+
+            particleSystem.update(deltaTime);
+
+            getParticleShader().use();
+
+            // uniforms
+            getParticleShader().setMat4("view", view);
+            getParticleShader().setMat4("projection", projection);
+            getParticleShader().setFloat("scale", 5.0f);  // scale, size of the cloud
+
+            // bind the texture 
+            glActiveTexture(GL_TEXTURE0);
+            getPsTexture().bindTexture(GL_TEXTURE0);  
+
+            // draw 
+            glDepthMask(GL_FALSE);
+            particleSystem.draw(view, projection);
+            glDepthMask(GL_TRUE);
+
             glfwSwapBuffers(window);
             glfwPollEvents();
 
             limitFPS(60);
         }
     }
+
+    // === SHADERS ===
 
     Shader &getBoxShader() {
         if (!boxShader)
@@ -171,6 +211,22 @@ public:
         return *axisShader;
     }
 
+    Shader& getModelShader() {
+    if (!modelShader)
+        throw std::runtime_error("Model Shader not initialized");
+    return *modelShader;
+    }
+
+    Shader& getParticleShader() {
+    if (!particleShader)
+        throw std::runtime_error("Particle Shader not initialized");
+    return *particleShader;
+    }
+
+
+    // === TEXTURES ===
+
+
     Texture &getTexture1() {
         if (!texture1)
             throw std::runtime_error("Texture1 not initialized");
@@ -188,6 +244,14 @@ public:
             throw std::runtime_error("Texture2 not initialized");
         return *texture3;
     }
+    
+    Texture &getPsTexture() {
+    if (!psTexture)
+        throw std::runtime_error("Particles texture not initialized");
+    return *psTexture;
+    }
+
+
 
     Object &getObject() {
         if (!box)
@@ -211,12 +275,6 @@ public:
         return camera;
     }
 
-    Shader& getModelShader() {
-    if (!modelShader)
-        throw std::runtime_error("Model Shader not initialized");
-    return *modelShader;
-    }
-
     float getAspectRatio() const { return (float)SCR_WIDTH / (float)SCR_HEIGHT; }
     float getFov() const { return camera.Zoom; }
 
@@ -229,12 +287,14 @@ private:
         planeShader.emplace("shaders/plane.vs", "shaders/plane.fs");
         axisShader.emplace("shaders/axis.vs", "shaders/axis.fs");
         modelShader.emplace("shaders/model.vs", "shaders/model.fs");
+        particleShader.emplace("shaders/particle.vs", "shaders/particle.fs");
     }
 
     void initTextures() {
         texture1.emplace("textures/container.jpg");
         texture2.emplace("textures/awesomeface.png");
         texture3.emplace("textures/europe_map.png");
+        psTexture.emplace("textures/smoke2.png");
 
         getBoxShader().use();
         getBoxShader().setInt("texture1", 0);
@@ -242,6 +302,9 @@ private:
 
         getPlaneShader().use();
         getPlaneShader().setInt("Tex", 0);
+
+        getParticleShader().use();
+        getParticleShader().setInt("particleTexture", 0);
 
         glUseProgram(0);
     }

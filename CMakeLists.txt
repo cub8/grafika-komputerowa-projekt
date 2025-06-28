@@ -13,6 +13,7 @@ set(SOURCES
     src/callbacks.cpp
     src/renderer.cpp
     src/model.cpp
+    src/particle_system.cpp
     ${EXTERNAL_SOURCES}
     ${INTERNAL_SOURCES}
 )

@@ -10,7 +10,9 @@ namespace Renderer {
     void renderBoxes(Program *program);
     void renderPlane(Program *program);
     void renderAxis(Program *program);
-    void renderModel(Program* program, Model& modelObject, glm::vec3 position, glm::vec3 scale);
+    void renderPlants(Program *program);
+    void renderPlant(Program* program, glm::vec3 position, glm::vec3 scale);
+    void renderParticles(Program* program);
     glm::mat4 buildProjectionMatrix(Program *program);
     void cleanUp();
 }

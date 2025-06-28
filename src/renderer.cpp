@@ -13,66 +13,90 @@
 
 namespace Renderer {
     void renderBoxes(Program *program) {
+        Shader& shader = program->getBoxShader();
+        Object& object = program->getObject();
+
         program->getTexture1().bindTexture(GL_TEXTURE0);
         program->getTexture2().bindTexture(GL_TEXTURE1);
-        program->getBoxShader().use();
+        shader.use();
 
         glm::mat4 view = program->getCamera().GetViewMatrix();
-        program->getBoxShader().setMat4("view", view);
-        program->getBoxShader().setMat4("projection", buildProjectionMatrix(program));
+        shader.setMat4("view", view);
+        shader.setMat4("projection", buildProjectionMatrix(program));
 
-        program->getObject().bindVertexArray();
+        object.bindVertexArray();
         for (unsigned int i = 0; i < 10; i++) {
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::translate(model, program->cubePositions[i]);
             float angle = 20.0f * i;
             model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-            program->getBoxShader().setMat4("model", model);
-            program->getObject().draw();
+            shader.setMat4("model", model);
+            object.draw();
         }
 
         cleanUp();
     }
 
     void renderPlane(Program *program) {
+        Shader& shader = program->getPlaneShader();
+        Object& plane = program->getPlane();
+
         program->getTexture3().bindTexture(GL_TEXTURE0);
-        program->getPlaneShader().use();
+        shader.use();
 
         auto view = program->getCamera().GetViewMatrix();
-        program->getPlaneShader().setMat4("view", view);
-        program->getPlaneShader().setMat4("projection", buildProjectionMatrix(program));
+        shader.setMat4("view", view);
+        shader.setMat4("projection", buildProjectionMatrix(program));
 
-        program->getPlane().bindVertexArray();
+        plane.bindVertexArray();
         auto model = glm::mat4(1.0f);
         auto modelScale = glm::vec3(WorldConstraints::SCALE, 1.0f, WorldConstraints::SCALE);
         model = glm::scale(model, modelScale);
-        program->getPlaneShader().setMat4("model", model);
-        program->getPlane().draw();
+        shader.setMat4("model", model);
+        plane.draw();
 
         cleanUp();
     }
 
     void renderAxis(Program *program) {
-        program->getAxisShader().use();
+        Shader& shader = program->getAxisShader();
+        Object& axis = program->getAxis();
+
+        shader.use();
 
         auto view = program->getCamera().GetViewMatrix();
-        program->getAxisShader().setMat4("view", view);
-        program->getAxisShader().setMat4("projection", buildProjectionMatrix(program));
-        program->getAxis().bindVertexArray();
+        shader.setMat4("view", view);
+        shader.setMat4("projection", buildProjectionMatrix(program));
+        axis.bindVertexArray();
         
         auto model = glm::mat4(1.0f);
         auto modelScale = glm::vec3(30.0f, 30.0f, 30.0f);
         model = glm::scale(model, modelScale);
-        program->getAxisShader().setMat4("model", model);
-        program->getAxis().drawLines();
+        shader.setMat4("model", model);
+        axis.drawLines();
 
         cleanUp();
     }
 
+    void renderPlants(Program* program) {
+        for (int i = 0; i < program->plantPositions.size(); ++i) {
+            program->getModelShader().use();
+            auto &pos = program->plantPositions[i];
 
-    void renderModel(Program* program, Model& modelObject, glm::vec3 position, glm::vec3 scale) {
+            if (program->getSelectedPlantIndex() == i) {
+                program->getModelShader().setVec3("overrideColor1", glm::vec3(1.f, 0.f, 0.f)); // red color if selected
+            }
+            else {
+                program->getModelShader().setVec3("overrideColor1", glm::vec3(-1.f)); // no color
+            }
 
+            renderPlant(program, pos, glm::vec3(0.003f));
+        }
+    }
+
+    void renderPlant(Program* program, glm::vec3 position, glm::vec3 scale) {
         Shader& shader = program->getModelShader();
+        Model& plant = program->getPowerPlantModel(); 
         shader.use();
 
         glm::mat4 modelMatrix = glm::mat4(1.0f);
@@ -80,24 +104,33 @@ namespace Renderer {
         modelMatrix = glm::scale(modelMatrix, scale);
         shader.setMat4("model", modelMatrix);
 
-        // View + projection
         glm::mat4 view = program->getCamera().GetViewMatrix();
         glm::mat4 projection = buildProjectionMatrix(program);
         shader.setMat4("view", view);
         shader.setMat4("projection", projection);
 
-        modelObject.Draw(shader);
-
+        plant.Draw(shader);
         cleanUp();
-    }   
+    }
 
+    void renderParticles(Program *program) {
+        program->particleSystem.update(program->deltaTime);
+        program->getPsTexture().bindTexture(GL_TEXTURE0);
+        program->getParticleShader().use();
 
+        glm::mat4 view = program->camera.GetViewMatrix();
+        glm::mat4 projection = buildProjectionMatrix(program);
+
+        program->getParticleShader().setMat4("view", view);
+        program->getParticleShader().setMat4("projection", projection);
+
+        program->particleSystem.draw();
+        cleanUp();
+    }
 
     glm::mat4 buildProjectionMatrix(Program *program) {
-        const float SCR_WIDTH = static_cast<float>(program->SCR_WIDTH);
-        const float SCR_HEIGHT = static_cast<float>(program->SCR_HEIGHT);
-        const float RATIO = SCR_WIDTH / SCR_HEIGHT;
-        const float FOV = glm::radians(program->getCamera().Zoom);
+        const float RATIO = program->getAspectRatio();
+        const float FOV = glm::radians(program->getFov());
 
         return glm::perspective(FOV, RATIO, 0.1f, 100.0f);
     }

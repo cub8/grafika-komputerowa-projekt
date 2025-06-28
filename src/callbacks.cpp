@@ -108,6 +108,7 @@ namespace Callbacks {
             glm::vec3 dir = screenToWorldRay(xpos, ypos, program);
 
             int i = 0;
+            bool found = false;
             for (auto& pos : program->plantPositions) {
                 BoundingBox box;
                 float s = 0.5f;
@@ -122,9 +123,14 @@ namespace Callbacks {
                 
                     // index to color the Plant
                     program->selectedPlantIndex = i;
+                    found = true;
                     break;
                 }
                 ++i;
+            }
+            
+            if (!found) {
+                program->selectedPlantIndex = -1;
             }
         }
     }

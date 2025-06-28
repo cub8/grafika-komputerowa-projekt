@@ -118,7 +118,7 @@ namespace Callbacks {
                     std::cout << "Kabooooom! at ("
                             << pos.x << ", " << pos.y << ", " << pos.z << ")\n";
 
-                    program->particleSystem.emit(pos + glm::vec3(0, 2.5f, 0), 100);
+                    program->particleSystem.emit(pos + glm::vec3(0, 2.5f, 0), 5000);  // number of particles
                 
                     // index to color the Plant
                     program->selectedPlantIndex = i;

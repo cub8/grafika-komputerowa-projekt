@@ -44,10 +44,16 @@ void ParticleSystem::initGLResources()
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(InstanceData), (void*)offsetof(InstanceData, pos));
     glVertexAttribDivisor(1, 1);
+
     // intensity (float)
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, sizeof(InstanceData), (void*)offsetof(InstanceData, intensity));
     glVertexAttribDivisor(2, 1);
+
+    // scale
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(InstanceData), (void*)offsetof(InstanceData, scale));
+    glVertexAttribDivisor(3, 1);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
@@ -59,14 +65,27 @@ void ParticleSystem::emit(const glm::vec3& sourcePos, int count)
     for(int i = 0; i < count; ++i) {
         Particle p;
         p.position  = sourcePos;
+
+        // random start position 
+        glm::vec3 posOffset = glm::vec3(
+            glm::linearRand(-0.5f, 0.5f),
+            glm::linearRand(-0.3f, 0.3f),  
+            glm::linearRand(-0.5f, 0.5f)
+        );
+
+        p.position = sourcePos + posOffset;
+
         // random jitter
         p.velocity  = windVelocity + glm::vec3(
+            glm::linearRand(-0.3f, 0.3f),
             glm::linearRand(-0.1f, 0.1f),
-            glm::linearRand(-0.05f, 0.05f),
-            glm::linearRand(-0.1f, 0.1f)
+            glm::linearRand(-0.3f, 0.3f)
         );
+    
         p.life      = glm::linearRand(2.0f, 5.0f);
         p.intensity = 1.0f;
+        p.scale = glm::linearRand(0.1f, 0.8f);  // random scale
+
         particles.push_back(p);
 
         if (particles.size() >= maxParticles) break;
@@ -92,7 +111,7 @@ void ParticleSystem::updateGPUBuffer()
     instances.clear();
     instances.reserve(particles.size());
     for(const auto& p : particles) {
-        instances.push_back({ p.position, p.intensity });
+        instances.push_back({ p.position, p.intensity, p.scale });
     }
     glBindBuffer(GL_ARRAY_BUFFER, vboInstance);
     glBufferSubData(GL_ARRAY_BUFFER, 0, instances.size() * sizeof(InstanceData), instances.data());

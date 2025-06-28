@@ -8,11 +8,13 @@ struct Particle {
     glm::vec3 velocity;
     float life;
     float intensity;
+    float scale;
 };
 
 struct InstanceData {
     glm::vec3 pos;
     float intensity;
+    float scale;
 };
 
 class ParticleSystem {
@@ -31,7 +33,7 @@ private:
     unsigned int vao = 0;
     unsigned int vboInstance = 0;
     unsigned int quadVBO = 0;
-    const size_t maxParticles = 1000;
+    const size_t maxParticles = 10000;
 
     glm::vec3 windVelocity;
 

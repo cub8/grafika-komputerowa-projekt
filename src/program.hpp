@@ -162,7 +162,7 @@ public:
                 glm::radians(camera.Zoom),
                 getAspectRatio(),
                 0.1f,
-                1000.0f
+                100.0f
             );
             glm::mat4 view = camera.GetViewMatrix();
 
@@ -173,7 +173,6 @@ public:
             // uniforms
             getParticleShader().setMat4("view", view);
             getParticleShader().setMat4("projection", projection);
-            getParticleShader().setFloat("scale", 5.0f);  // scale, size of the cloud
 
             // bind the texture 
             glActiveTexture(GL_TEXTURE0);
@@ -294,7 +293,7 @@ private:
         texture1.emplace("textures/container.jpg");
         texture2.emplace("textures/awesomeface.png");
         texture3.emplace("textures/europe_map.png");
-        psTexture.emplace("textures/smoke2.png");
+        psTexture.emplace("textures/dot.png");
 
         getBoxShader().use();
         getBoxShader().setInt("texture1", 0);

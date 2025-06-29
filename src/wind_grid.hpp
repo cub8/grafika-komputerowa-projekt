@@ -9,15 +9,16 @@
 
 const float height = 2.0f;
 const glm::vec2 defaultVector = { 1.0f, 0.0f };
+const float radius = 3.0f;
 
 struct WindVector {
     glm::vec2 direction; // x and z direction
     glm::vec3 position;
-    float speed;
+    float velocity;
 
     // Note that pos is 2 dimensional point, where y is actually z.
-    WindVector(glm::vec2 dir, glm::vec2 pos, float spd) :
-        direction(dir), position(pos.x, height, pos.y), speed(spd) {}
+    WindVector(glm::vec2 dir, glm::vec2 pos, float vel) :
+        direction(dir), position(pos.x, height, pos.y), velocity(vel) {}
 
     float getAngleRadians() {
         glm::vec2 normalizedDirection = glm::normalize(glm::vec2(direction.x, -direction.y));
@@ -30,10 +31,10 @@ struct WindVector {
     }
 
     glm::vec3 getVectorColor() {
-        if (speed < 30) {
+        if (velocity < 30) {
             return glm::vec3(0.0f, 0.0f, 1.0f);
         }
-        else if (speed < 60) {
+        else if (velocity < 60) {
             return glm::vec3(1.0f, 1.0f, 0.0f);
         }
         else {
@@ -42,10 +43,10 @@ struct WindVector {
     }
 
     float getSpeedFactor() {
-        if (speed < 30) {
+        if (velocity < 30) {
             return 0.5f;
         }
-        else if (speed < 60) {
+        else if (velocity < 60) {
             return 1.0f;
         }
         else {
@@ -72,14 +73,30 @@ public:
         return windVectors;
     }
 
+    std::vector<WindVector> getWindVectorsAroundPoint(glm::vec3 pos) {
+        glm::vec2 position = glm::vec2(pos.x, pos.z);
+        std::vector<WindVector> foundVectors;
+        foundVectors.reserve(8);
+
+        for (auto& windVector : windVectors) {
+            glm::vec2 windPos = glm::vec2(windVector.position.x, windVector.position.z);
+
+            if (glm::distance(position, windPos) <= radius) {
+                foundVectors.push_back(windVector);
+            }
+        }
+
+        return foundVectors;
+    }
+
 private:
     void initSpanishWindVectors() {
         std::array<WindVector, 5> vectors = {
             WindVector(glm::vec2( 0.3f, -1.0f), glm::vec2(-20.3f,  12.3f),  80.0f),
-            WindVector(glm::vec2( 1.0f, -0.6f), glm::vec2(-20.3f,  12.3f),  40.0f),
             WindVector(glm::vec2(-1.0f, -1.0f), glm::vec2(-17.56f, 15.60f), 40.0f),
             WindVector(glm::vec2(-1.0f, -0.5f), glm::vec2(-13.97f, 14.54f), 40.0f),
-            WindVector(glm::vec2(-1.0f,  1.0f), glm::vec2(-16.76f, 9.46f),  20.0f),
+            WindVector(glm::vec2(-0.6f,  1.0f), glm::vec2(-16.76f, 9.46f),  20.0f),
+            WindVector(glm::vec2(-1.0f,  0.7f), glm::vec2(-11.41f, 10.76f),  20.0f),
         };
 
         for (auto& windVector : vectors) {
@@ -102,13 +119,12 @@ private:
     }
 
     void initFrenchWindVectors() {
-        std::array<WindVector, 6> vectors = {
+        std::array<WindVector, 5> vectors = {
             WindVector(glm::vec2(1.0f, -0.20f), glm::vec2(-18.85f,  5.68f),  40.0f),
             WindVector(glm::vec2(1.0f, -1.00f), glm::vec2(-12.73f,  6.50f),  40.0f),
             WindVector(glm::vec2(1.0f, -0.10f), glm::vec2(-13.66f,  2.12f),  40.0f),
             WindVector(glm::vec2(1.0f,  1.00f), glm::vec2( -9.35f,  5.03f),  20.0f),
             WindVector(glm::vec2(1.0f, -0.05f), glm::vec2( -7.54f,  9.78f),  40.0f),
-            WindVector(glm::vec2(1.0f,  0.90f), glm::vec2( -7.54f,  9.78f),  40.0f),
         };
 
         for (auto& windVector : vectors) {

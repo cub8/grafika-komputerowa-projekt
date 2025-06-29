@@ -117,6 +117,8 @@ public:
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+            particleSystem.update(deltaTime, windGrid);
+
             Renderer::renderBoxes(this);
             Renderer::renderPlane(this);
             Renderer::renderAxis(this);

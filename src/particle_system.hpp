@@ -8,9 +8,12 @@
 #include <iostream>
 #include <vector>
 
+#include "wind_grid.hpp"
+
 struct Particle {
     glm::vec3 position;
-    glm::vec3 velocity;
+    glm::vec3 direction;
+    float velocity;
     float life;
     float intensity;
     float scale;
@@ -22,13 +25,17 @@ struct InstanceData {
     float scale;
 };
 
+const float windVelocityScale = 0.10f;
+
 class ParticleSystem {
 public:
     ParticleSystem();
 
     void initialize();
     void emit(const glm::vec3& sourcePos, int count);
-    void update(float dt);
+    void update(float deltaTime, WindGrid& windGrid);
+    void adjustToWind(Particle& particle, WindGrid& windGrid);
+    float calculateWindInfluence(Particle& particle, const WindVector& windVector);
     void draw();
 
 private:
@@ -40,7 +47,8 @@ private:
     unsigned int quadVBO = 0;
     const size_t maxParticles = 10000;
 
-    glm::vec3 windVelocity;
+    glm::vec3 windDirection;
+    float windVelocity;
 
     void initGLResources();
     void updateGPUBuffer();

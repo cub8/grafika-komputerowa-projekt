@@ -111,7 +111,6 @@ namespace Renderer {
     }
 
     void renderParticles(Program *program) {
-        program->particleSystem.update(program->deltaTime);
         program->getPsTexture().bindTexture(GL_TEXTURE0);
         program->getParticleShader().use();
 

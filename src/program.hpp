@@ -33,12 +33,13 @@
 #include <thread>
 
 #include "particle_system.hpp"
+#include "contamination.hpp"
 
 
 class Program {
 public:
     GLFWwindow *window;
-    std::optional<Shader> boxShader, planeShader, axisShader, modelShader, particleShader;
+    std::optional<Shader> boxShader, planeShader, axisShader, modelShader, particleShader, contaminationShader;
     std::optional<Texture> texture1, texture2, texture3, psTexture;
     std::optional<Object> box, plane, axis;
     std::optional<Model> powerPlantModel;
@@ -50,6 +51,8 @@ public:
     std::vector<glm::vec3> plantPositions;
 
     std::optional<int> selectedPlantIndex;
+
+    Contamination contaminationMask;
 
     const unsigned int SCR_WIDTH = 1200;
     const unsigned int SCR_HEIGHT = 800;
@@ -90,6 +93,7 @@ public:
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         initShaders();
+        contaminationMask.initialize(SCR_WIDTH, SCR_HEIGHT);
         initTextures();
         initObjects();
 
@@ -129,17 +133,57 @@ public:
             float currentFrame = static_cast<float>(glfwGetTime());
             deltaTime = currentFrame - lastFrame;
             lastFrame = currentFrame;
+            glfwSwapInterval(1); // fps
 
-            glfwSwapInterval(1);
+            // render to MASK
+            contaminationMask.bind();
+            contaminationMask.clear();
+
+            // ortho-camera
+            float W = WorldConstraints::ASPECT_RATIO;
+            float D = W * (float)SCR_HEIGHT / (float)SCR_WIDTH;
+            glm::mat4 maskProj = glm::ortho(-W, +W, -D, +D, -1.0f, +1.0f);
+            glm::mat4 maskView = glm::lookAt(
+                glm::vec3(0, 10, 0),   
+                glm::vec3(0, 0, 0),    
+                glm::vec3(0, 0, -1)    
+            );
+
+            glDisable(GL_DEPTH_TEST);
+
+            // flat quads (ground)
+            getContaminationShader().use();
+            getContaminationShader().setMat4("view", maskView);
+            getContaminationShader().setMat4("projection", maskProj);
+            getContaminationShader().setFloat("baseSize", 2.0f); 
+
+            particleSystem.drawDecals();  
+
+            glEnable(GL_DEPTH_TEST);
+            contaminationMask.unbind();            
 
             processInput(window);
 
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            // Renderer::renderBoxes(this);
+
+            // AGAIN before rendering plane
+
+            getPlaneShader().use();
+            // Slot 0 - map
+            glActiveTexture(GL_TEXTURE0);
+            texture3->bindTexture(GL_TEXTURE0);      
+            getPlaneShader().setInt("Tex", 0);
+            // Slot 1 - contamination mask
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, contaminationMask.getTextureID());
+            getPlaneShader().setInt("ContaminationTex", 1);
+
             Renderer::renderPlane(this);
             Renderer::renderAxis(this);
+
+            // POWER PLANTS
 
             for (int i = 0; i < plantPositions.size(); ++i) {
                 auto& pos = plantPositions[i];
@@ -156,7 +200,7 @@ public:
                 Renderer::renderModel(this, *powerPlantModel, pos, glm::vec3(0.003f));
             }
 
-            // PARTICLES
+            // 3D PARTICLES 
 
             glm::mat4 projection = glm::perspective(
                 glm::radians(camera.Zoom),
@@ -183,9 +227,9 @@ public:
             particleSystem.draw(view, projection);
             glDepthMask(GL_TRUE);
 
+
             glfwSwapBuffers(window);
             glfwPollEvents();
-
             limitFPS(60);
         }
     }
@@ -221,6 +265,12 @@ public:
         throw std::runtime_error("Particle Shader not initialized");
     return *particleShader;
     }
+
+    Shader& getContaminationShader() {
+    if (!contaminationShader)
+        throw std::runtime_error("Contamination Shader not initialized");
+    return *contaminationShader;
+    }    
 
 
     // === TEXTURES ===
@@ -287,6 +337,7 @@ private:
         axisShader.emplace("shaders/axis.vs", "shaders/axis.fs");
         modelShader.emplace("shaders/model.vs", "shaders/model.fs");
         particleShader.emplace("shaders/particle.vs", "shaders/particle.fs");
+        contaminationShader.emplace("shaders/contamination.vs", "shaders/contamination.fs");
     }
 
     void initTextures() {
@@ -299,8 +350,20 @@ private:
         getBoxShader().setInt("texture1", 0);
         getBoxShader().setInt("texture2", 1);
 
+
         getPlaneShader().use();
+
+        // Slot 0 - map
+        glActiveTexture(GL_TEXTURE0);
+        texture3->bindTexture(GL_TEXTURE0);      
         getPlaneShader().setInt("Tex", 0);
+
+        // Slot 1 - contamination mask
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, contaminationMask.getTextureID());
+        getPlaneShader().setInt("ContaminationTex", 1);
+
+
 
         getParticleShader().use();
         getParticleShader().setInt("particleTexture", 0);

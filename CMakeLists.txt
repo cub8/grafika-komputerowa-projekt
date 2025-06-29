@@ -14,6 +14,7 @@ set(SOURCES
     src/renderer.cpp
     src/model.cpp
     src/particle_system.cpp
+    src/contamination.cpp
     ${EXTERNAL_SOURCES}
     ${INTERNAL_SOURCES}
 )

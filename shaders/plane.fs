@@ -4,8 +4,12 @@ out vec4 FragColor;
 in vec2 TexCoord;
 
 uniform sampler2D Tex;
+uniform sampler2D ContaminationTex;
 
 void main()
 {
-    FragColor = texture(Tex, TexCoord);
+    vec4 mapColor = texture(Tex, TexCoord);
+    vec4 contamination = texture(ContaminationTex, TexCoord);
+
+    FragColor = mix(mapColor, contamination, contamination.a);
 }

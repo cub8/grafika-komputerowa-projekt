@@ -23,6 +23,8 @@ void ParticleSystem::initGLResources()
          0.5f,  0.5f
     };
 
+    // 3D PARTICLES 
+
     //VAO
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
@@ -57,6 +59,41 @@ void ParticleSystem::initGLResources()
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
+
+
+    // 2D DECALS
+
+    // decal VAO
+    glGenVertexArrays(1, &decalVao);
+    glBindVertexArray(decalVao);
+
+    // same quadVBO 
+    glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2*sizeof(float), (void*)0);
+
+    // decal VBO
+    glGenBuffers(1, &decalVbo);
+    glBindBuffer(GL_ARRAY_BUFFER, decalVbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(InstanceData) * maxParticles, nullptr, GL_STREAM_DRAW);
+
+    // y = 0, for ground spots
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(InstanceData), (void*)offsetof(InstanceData,pos));
+    glVertexAttribDivisor(1, 1);
+
+    // atrybut 2 = intensity
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, sizeof(InstanceData), (void*)offsetof(InstanceData,intensity));
+    glVertexAttribDivisor(2, 1);
+
+    // atrybut 3 = scale
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(InstanceData), (void*)offsetof(InstanceData,scale));
+    glVertexAttribDivisor(3, 1);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);    
 }
 
 
@@ -118,11 +155,36 @@ void ParticleSystem::updateGPUBuffer()
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
+void ParticleSystem::updateDecalBuffer()
+{
+    instances.clear();
+    instances.reserve(particles.size());
+    for (auto& p : particles) {
+        // spłaszczamy Y = 0
+        instances.push_back({
+            glm::vec3(p.position.x, 0.0f, p.position.z),
+            p.intensity,
+            p.scale
+        });
+    }
+    glBindBuffer(GL_ARRAY_BUFFER, decalVbo);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, instances.size()*sizeof(InstanceData), instances.data());
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
 void ParticleSystem::draw(const glm::mat4& view, const glm::mat4& proj)
 {
     updateGPUBuffer();
 
     glBindVertexArray(vao);
+    glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, (GLsizei)instances.size());
+    glBindVertexArray(0);
+}
+
+void ParticleSystem::drawDecals()
+{
+    updateDecalBuffer();
+    glBindVertexArray(decalVao);
     glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, (GLsizei)instances.size());
     glBindVertexArray(0);
 }

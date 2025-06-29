@@ -4,9 +4,10 @@
 
 class Contamination {
 public:
-    void initialize(unsigned int width = 1024, unsigned int height = 1024);
+    void initialize(unsigned int width, unsigned int height);
     void bind();
     void unbind();
+    void clear();
     GLuint getTextureID() const;
 
 private:

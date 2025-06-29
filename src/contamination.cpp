@@ -1,4 +1,4 @@
-#include "Contamination.hpp"
+#include "contamination.hpp"
 #include <iostream>
 
 void Contamination::initialize(unsigned int width, unsigned int height) {
@@ -35,4 +35,11 @@ void Contamination::unbind() {
 
 GLuint Contamination::getTextureID() const {
     return texture;
+}
+
+void Contamination::clear() {
+    bind();
+    glClearColor(0, 0, 0, 0);
+    glClear(GL_COLOR_BUFFER_BIT);
+    unbind();
 }

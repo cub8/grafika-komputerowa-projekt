@@ -94,6 +94,7 @@ public:
 
         initShaders();
         contaminationMask.initialize(SCR_WIDTH, SCR_HEIGHT);
+        contaminationMask.clear();  
         initTextures();
         initObjects();
 
@@ -162,6 +163,12 @@ public:
     if (!particleShader)
         throw std::runtime_error("Particle Shader not initialized");
     return *particleShader;
+    }
+
+    Shader& getContaminationShader() {
+        if (!contaminationShader)
+            throw std::runtime_error("Contamination Shader not initialized");
+        return *contaminationShader;
     }
 
 
@@ -257,17 +264,15 @@ private:
 
         getPlaneShader().use();
 
-        // Slot 0 - map
+        // slot 0 
         glActiveTexture(GL_TEXTURE0);
-        texture3->bindTexture(GL_TEXTURE0);      
+        texture3->bindTexture(GL_TEXTURE0);
         getPlaneShader().setInt("Tex", 0);
 
-        // Slot 1 - contamination mask
+        // slot 1 
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, contaminationMask.getTextureID());
         getPlaneShader().setInt("ContaminationTex", 1);
-
-
 
         getParticleShader().use();
         getParticleShader().setInt("particleTexture", 0);

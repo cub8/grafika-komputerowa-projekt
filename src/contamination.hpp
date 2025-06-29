@@ -1,6 +1,8 @@
 #pragma once
 
 #include <glad/glad.h>
+#include <vector>
+#include "particle_system.hpp"
 
 class Contamination {
 public:
@@ -11,8 +13,9 @@ public:
     GLuint getTextureID() const;
 
 private:
-    GLuint fbo = 0;
     GLuint texture = 0;
+    GLuint fbo = 0;
+
     unsigned int texWidth = 0;
     unsigned int texHeight = 0;
 };

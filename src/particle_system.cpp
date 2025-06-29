@@ -5,7 +5,7 @@
 #include <iostream>
 
 ParticleSystem::ParticleSystem() {
-    windVelocity = glm::normalize(glm::vec3(-2.f, 0.0f, 1.5f)) * 2.f;
+    windVelocity = glm::normalize(glm::vec3(2.f, 0.0f, 5.5f)) * 2.f;
 }
 
 void ParticleSystem::initialize() {

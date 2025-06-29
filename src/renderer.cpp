@@ -41,18 +41,29 @@ namespace Renderer {
         Shader& shader = program->getPlaneShader();
         Object& plane = program->getPlane();
 
+        // slot 0 - map
+        glActiveTexture(GL_TEXTURE0);
         program->getTexture3().bindTexture(GL_TEXTURE0);
+        shader.setInt("Tex", 0);
+
+        // slot 1 - contamination
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, program->contaminationMask.getTextureID());
+        shader.setInt("ContaminationTex", 1);
+
         shader.use();
 
         auto view = program->getCamera().GetViewMatrix();
         shader.setMat4("view", view);
         shader.setMat4("projection", buildProjectionMatrix(program));
 
-        plane.bindVertexArray();
+        
         auto model = glm::mat4(1.0f);
         auto modelScale = glm::vec3(WorldConstraints::SCALE, 1.0f, WorldConstraints::SCALE);
         model = glm::scale(model, modelScale);
         shader.setMat4("model", model);
+
+        plane.bindVertexArray();
         plane.draw();
 
         cleanUp();
@@ -115,11 +126,48 @@ namespace Renderer {
 
     void renderParticles(Program *program) {
         program->particleSystem.update(program->deltaTime);
+
+        glm::mat4 view       = program->camera.GetViewMatrix();
+        glm::mat4 projection = buildProjectionMatrix(program);
+
+        // 2D ground contamination
+
+        
+
+        glDisable(GL_DEPTH_TEST);
+
+        //std::cout <<  "LEFT -x  " << WorldConstraints::LEFT << "RIGHT +x " << WorldConstraints::RIGHT
+        //    << "BOTTOM +z " << WorldConstraints::BOTTOM << "TOP -z " << WorldConstraints::TOP << std::endl;
+
+
+        float realLEFT = -WorldConstraints::SCALE * WorldConstraints::ASPECT_RATIO;
+        float realRIGHT = WorldConstraints::SCALE * WorldConstraints::ASPECT_RATIO;
+        float realBOTTOM = WorldConstraints::SCALE;
+        float realTOP = -WorldConstraints::SCALE;
+
+        glm::mat4 orthoProj = glm::ortho(
+            realLEFT, realRIGHT,
+            realBOTTOM, realTOP,
+            -1.0f, 1.0f);
+
+        glm::mat4 orthoView = glm::mat4(1.0f);
+
+
+        program->getContaminationShader().use();
+        program->contaminationMask.bind();
+        
+        program->getContaminationShader().setMat4("view", orthoView);
+        program->getContaminationShader().setMat4("projection", orthoProj);
+
+        program->particleSystem.draw();
+
+        program->contaminationMask.unbind();
+        glEnable(GL_DEPTH_TEST);
+
+        // 3D particles
+
         program->getPsTexture().bindTexture(GL_TEXTURE0);
         program->getParticleShader().use();
-
-        glm::mat4 view = program->camera.GetViewMatrix();
-        glm::mat4 projection = buildProjectionMatrix(program);
 
         program->getParticleShader().setMat4("view", view);
         program->getParticleShader().setMat4("projection", projection);

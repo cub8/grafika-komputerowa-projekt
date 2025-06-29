@@ -1,6 +1,7 @@
 #include "contamination.hpp"
 #include <iostream>
 
+
 void Contamination::initialize(unsigned int width, unsigned int height) {
     texWidth = width;
     texHeight = height;

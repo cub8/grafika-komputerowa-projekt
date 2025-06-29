@@ -6,10 +6,19 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+#include <string>
+#include <filesystem/filesystem.h>
+#include <stb_image/stb_image.h>
+
 #include <array>
 #include <iostream>
 #include <optional>
 #include <vector>
+#include <chrono>
+#include <thread>
 
 #include "box.hpp"
 #include "callbacks.hpp"
@@ -20,18 +29,6 @@
 #include "texture.hpp"
 #include "world_constraints.hpp"
 #include "model.hpp"
-
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
-#include <string>
-#include <filesystem/filesystem.h>
-#include <stb_image/stb_image.h>
-
-// to limit FPS
-#include <chrono>
-#include <thread>
-
 #include "particle_system.hpp"
 #include "contamination.hpp"
 
@@ -46,7 +43,7 @@ public:
     std::array<glm::vec3, 10> cubePositions;
     Camera camera;
 
-    ParticleSystem particleSystem; 
+    ParticleSystem particleSystem;
 
     std::vector<glm::vec3> plantPositions;
 
@@ -99,32 +96,12 @@ public:
 
         particleSystem.initialize();
 
-        // initialize plant positions
-        plantPositions = {
-            {22.0f, 0.0f, 4.0f}, // Zaporoze (Ukraine)
-            {3.0f, 0.0f, -10.0f}, // Forsmark (Sweden)
-            {-10.0f, 0.0f, 1.5f}, // Gravelines (France)
-            {6.0f, 0.0f, 4.0f}, // Mochovce (Slovakia)
-            {-14.0f, 0.0f, 12.0f} // Cofrentes (Spain)
-        };
+        selectedPlantIndex.emplace(-1);
 
         camera = Camera(glm::vec3(0.0f, 10.0f, 0.0f), -90.0f, -45.0f);
     }
 
     ~Program() { glfwTerminate(); }
-
-
-    void limitFPS(float targetFPS) {
-    static float lastTime = 0.0f;
-    float currentTime = static_cast<float>(glfwGetTime());
-    float deltaTime = currentTime - lastTime;
-
-    if (deltaTime < (1.0f / targetFPS)) {
-        std::this_thread::sleep_for(std::chrono::duration<float>(1.0f / targetFPS - deltaTime));
-    }
-    lastTime = static_cast<float>(glfwGetTime());
-}
-
 
     void renderLoop() {
         std::cout << "Render loop started\n";
@@ -135,97 +112,10 @@ public:
             lastFrame = currentFrame;
             glfwSwapInterval(1); // fps
 
-            // render to MASK
-            contaminationMask.bind();
-            contaminationMask.clear();
-
-            // ortho-camera
-            float W = WorldConstraints::ASPECT_RATIO;
-            float D = W * (float)SCR_HEIGHT / (float)SCR_WIDTH;
-            glm::mat4 maskProj = glm::ortho(-W, +W, -D, +D, -1.0f, +1.0f);
-            glm::mat4 maskView = glm::lookAt(
-                glm::vec3(0, 10, 0),   
-                glm::vec3(0, 0, 0),    
-                glm::vec3(0, 0, -1)    
-            );
-
-            glDisable(GL_DEPTH_TEST);
-
-            // flat quads (ground)
-            getContaminationShader().use();
-            getContaminationShader().setMat4("view", maskView);
-            getContaminationShader().setMat4("projection", maskProj);
-            getContaminationShader().setFloat("baseSize", 2.0f); 
-
-            particleSystem.drawDecals();  
-
-            glEnable(GL_DEPTH_TEST);
-            contaminationMask.unbind();            
-
-            processInput(window);
-
-            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-
-            // AGAIN before rendering plane
-
-            getPlaneShader().use();
-            // Slot 0 - map
-            glActiveTexture(GL_TEXTURE0);
-            texture3->bindTexture(GL_TEXTURE0);      
-            getPlaneShader().setInt("Tex", 0);
-            // Slot 1 - contamination mask
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, contaminationMask.getTextureID());
-            getPlaneShader().setInt("ContaminationTex", 1);
-
             Renderer::renderPlane(this);
             Renderer::renderAxis(this);
-
-            // POWER PLANTS
-
-            for (int i = 0; i < plantPositions.size(); ++i) {
-                auto& pos = plantPositions[i];
-                
-                if (selectedPlantIndex && *selectedPlantIndex == i) {
-                    getModelShader().use();
-                    getModelShader().setVec3("overrideColor1", glm::vec3(1.f, 0.f, 0.f)); // red color if selected
-                }
-                else {
-                    getModelShader().use();
-                    getModelShader().setVec3("overrideColor1", glm::vec3(-1.f)); // no color
-                }
-                
-                Renderer::renderModel(this, *powerPlantModel, pos, glm::vec3(0.003f));
-            }
-
-            // 3D PARTICLES 
-
-            glm::mat4 projection = glm::perspective(
-                glm::radians(camera.Zoom),
-                getAspectRatio(),
-                0.1f,
-                100.0f
-            );
-            glm::mat4 view = camera.GetViewMatrix();
-
-            particleSystem.update(deltaTime);
-
-            getParticleShader().use();
-
-            // uniforms
-            getParticleShader().setMat4("view", view);
-            getParticleShader().setMat4("projection", projection);
-
-            // bind the texture 
-            glActiveTexture(GL_TEXTURE0);
-            getPsTexture().bindTexture(GL_TEXTURE0);  
-
-            // draw 
-            glDepthMask(GL_FALSE);
-            particleSystem.draw(view, projection);
-            glDepthMask(GL_TRUE);
+            Renderer::renderPlants(this);
+            Renderer::renderParticles(this);
 
 
             glfwSwapBuffers(window);
@@ -254,10 +144,10 @@ public:
         return *axisShader;
     }
 
-    Shader& getModelShader() {
-    if (!modelShader)
-        throw std::runtime_error("Model Shader not initialized");
-    return *modelShader;
+    Shader &getModelShader() {
+        if (!modelShader)
+            throw std::runtime_error("Model Shader not initialized");
+        return *modelShader;
     }
 
     Shader& getParticleShader() {
@@ -266,15 +156,8 @@ public:
     return *particleShader;
     }
 
-    Shader& getContaminationShader() {
-    if (!contaminationShader)
-        throw std::runtime_error("Contamination Shader not initialized");
-    return *contaminationShader;
-    }    
-
 
     // === TEXTURES ===
-
 
     Texture &getTexture1() {
         if (!texture1)
@@ -293,14 +176,14 @@ public:
             throw std::runtime_error("Texture2 not initialized");
         return *texture3;
     }
-    
+
     Texture &getPsTexture() {
-    if (!psTexture)
-        throw std::runtime_error("Particles texture not initialized");
-    return *psTexture;
+        if (!psTexture)
+            throw std::runtime_error("Particles texture not initialized");
+        return *psTexture;
     }
 
-
+    // === OBJECTS ===
 
     Object &getObject() {
         if (!box)
@@ -320,15 +203,28 @@ public:
         return *axis;
     }
 
-    Camera &getCamera() {
-        return camera;
+    Model &getPowerPlantModel() {
+        if (!powerPlantModel)
+            throw std::runtime_error("Power Plant Model not initialized");
+        return *powerPlantModel;
     }
 
-    float getAspectRatio() const { return (float)SCR_WIDTH / (float)SCR_HEIGHT; }
+    // === OTHERS ===
+
+    Camera &getCamera() { return camera; }
+
+    float getAspectRatio() const { 
+        return static_cast<float>(SCR_WIDTH) / static_cast<float>(SCR_HEIGHT); 
+    }
+
     float getFov() const { return camera.Zoom; }
 
-
-
+    int getSelectedPlantIndex() const { 
+        if (!selectedPlantIndex) {
+            throw std::runtime_error("Selected plant index not initialized");
+        }
+        return *selectedPlantIndex;
+    }
 
 private:
     void initShaders() {
@@ -371,18 +267,20 @@ private:
         glUseProgram(0);
     }
 
-
-
     void initObjects() {
-
         powerPlantModel.emplace("../models/cooling_tower.obj");
-
+        plantPositions = {
+            {22.0f, 0.0f, 4.0f}, // Zaporoze (Ukraine)
+            {3.0f, 0.0f, -10.0f}, // Forsmark (Sweden)
+            {-10.0f, 0.0f, 1.5f}, // Gravelines (France)
+            {6.0f, 0.0f, 4.0f}, // Mochovce (Slovakia)
+            {-14.0f, 0.0f, 12.0f} // Cofrentes (Spain)
+        };
 
         auto attributes = std::vector<int>{ 3, 2 };
         box.emplace(vertices, sizeof(vertices), attributes);
 
         const float width = WorldConstraints::ASPECT_RATIO;
-
         const float planeVertices[] = {
             // positions                   // texCoords
             -width, 0.0f,  1.0f,          0.0f, 1.0f,
@@ -406,7 +304,6 @@ private:
             0.0f, 0.0f, 0.0f,    0.0f, 0.0f, 1.0f,   // Z-axis start (Blue)
             0.0f, 0.0f, 1.0f,    0.0f, 0.0f, 1.0f    // Z-axis end
         };
-
         auto axisAttributes = std::vector<int>{ 3, 3 };
         axis.emplace(axisVertices, sizeof(axisVertices), axisAttributes);
     }
@@ -415,12 +312,10 @@ private:
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
             glfwSetWindowShouldClose(window, true);
 
-        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
             camera.RaiseMovementSpeed();
-        }
-        else {
+        else
             camera.LowerMovementSpeed();
-        }
 
         if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
             camera.ProcessKeyboard(FORWARD, deltaTime);
@@ -430,5 +325,16 @@ private:
             camera.ProcessKeyboard(LEFT, deltaTime);
         if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
             camera.ProcessKeyboard(RIGHT, deltaTime);
+    }
+
+    void limitFPS(float targetFPS) {
+        static float lastTime = 0.0f;
+        float currentTime = static_cast<float>(glfwGetTime());
+        float deltaTime = currentTime - lastTime;
+
+        if (deltaTime < (1.0f / targetFPS)) {
+            std::this_thread::sleep_for(std::chrono::duration<float>(1.0f / targetFPS - deltaTime));
+        }
+        lastTime = static_cast<float>(glfwGetTime());
     }
 };

@@ -1,11 +1,9 @@
 #include "particle_system.hpp"
-#include <glm/gtc/random.hpp>  // for glm::linearRand
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-#include <iostream>
+
 
 ParticleSystem::ParticleSystem() {
-    windVelocity = glm::normalize(glm::vec3(-2.f, 0.0f, 1.5f)) * 2.f;
+    auto direction = glm::vec3(-2.f, 0.0f, -1.5f);
+    windVelocity = glm::normalize(direction) * 2.f;
 }
 
 void ParticleSystem::initialize() {

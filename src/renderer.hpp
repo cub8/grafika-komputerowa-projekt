@@ -3,16 +3,19 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "model.hpp"
+#include "wind_grid.hpp"
 
 class Program;
 
 namespace Renderer {
-    void renderBoxes(Program *program);
-    void renderPlane(Program *program);
-    void renderAxis(Program *program);
-    void renderPlants(Program *program);
-    void renderPlant(Program* program, glm::vec3 position, glm::vec3 scale);
-    void renderParticles(Program* program);
-    glm::mat4 buildProjectionMatrix(Program *program);
+    void renderBoxes(Program *);
+    void renderPlane(Program *);
+    void renderAxis(Program *);
+    void renderPlants(Program *);
+    void renderPlant(Program *, glm::vec3, glm::vec3);
+    void renderParticles(Program *);
+    void renderWindVectors(Program *);
+    void renderWindVector(Program *, WindVector&);
+    glm::mat4 buildProjectionMatrix(Program *);
     void cleanUp();
 }

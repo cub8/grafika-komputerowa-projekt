@@ -13,8 +13,8 @@
 
 namespace Renderer {
     void renderBoxes(Program *program) {
-        Shader& shader = program->getBoxShader();
-        Object& object = program->getObject();
+        Shader &shader = program->getBoxShader();
+        Object &box = program->getBox();
 
         program->getTexture1().bindTexture(GL_TEXTURE0);
         program->getTexture2().bindTexture(GL_TEXTURE1);
@@ -24,22 +24,19 @@ namespace Renderer {
         shader.setMat4("view", view);
         shader.setMat4("projection", buildProjectionMatrix(program));
 
-        object.bindVertexArray();
-        for (unsigned int i = 0; i < 10; i++) {
-            glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model, program->cubePositions[i]);
-            float angle = 20.0f * i;
-            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-            shader.setMat4("model", model);
-            object.draw();
-        }
+        glm::vec3 position = program->getCamera().Position;
 
+        box.bindVertexArray();
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(position.x, 0.0f, position.z));
+        shader.setMat4("model", model);
+        box.draw();
         cleanUp();
     }
 
     void renderPlane(Program *program) {
-        Shader& shader = program->getPlaneShader();
-        Object& plane = program->getPlane();
+        Shader &shader = program->getPlaneShader();
+        Object &plane = program->getPlane();
 
         program->getTexture3().bindTexture(GL_TEXTURE0);
         shader.use();
@@ -59,8 +56,8 @@ namespace Renderer {
     }
 
     void renderAxis(Program *program) {
-        Shader& shader = program->getAxisShader();
-        Object& axis = program->getAxis();
+        Shader &shader = program->getAxisShader();
+        Object &axis = program->getAxis();
 
         shader.use();
 
@@ -68,7 +65,7 @@ namespace Renderer {
         shader.setMat4("view", view);
         shader.setMat4("projection", buildProjectionMatrix(program));
         axis.bindVertexArray();
-        
+
         auto model = glm::mat4(1.0f);
         auto modelScale = glm::vec3(30.0f, 30.0f, 30.0f);
         model = glm::scale(model, modelScale);
@@ -78,7 +75,7 @@ namespace Renderer {
         cleanUp();
     }
 
-    void renderPlants(Program* program) {
+    void renderPlants(Program *program) {
         for (int i = 0; i < program->plantPositions.size(); ++i) {
             program->getModelShader().use();
             auto &pos = program->plantPositions[i];
@@ -94,9 +91,9 @@ namespace Renderer {
         }
     }
 
-    void renderPlant(Program* program, glm::vec3 position, glm::vec3 scale) {
-        Shader& shader = program->getModelShader();
-        Model& plant = program->getPowerPlantModel(); 
+    void renderPlant(Program *program, glm::vec3 position, glm::vec3 scale) {
+        Shader &shader = program->getModelShader();
+        Model &plant = program->getPowerPlantModel();
         shader.use();
 
         glm::mat4 modelMatrix = glm::mat4(1.0f);
@@ -125,6 +122,49 @@ namespace Renderer {
         program->getParticleShader().setMat4("projection", projection);
 
         program->particleSystem.draw();
+        cleanUp();
+    }
+
+    void renderWindVectors(Program *program) {
+        for (auto &windVector : program->getWindGrid().getWindVectors()) {
+            renderWindVector(program, windVector);
+        }
+    }
+
+    void renderWindVector(Program *program, WindVector &windVector) {
+        Shader &shader = program->getWindVectorShader();
+        Object &vectorArrow = program->getVectorArrow();
+
+        shader.use();
+        glm::mat4 view = program->getCamera().GetViewMatrix();
+        glm::mat4 projection = buildProjectionMatrix(program);
+        shader.setMat4("view", view);
+        shader.setMat4("projection", projection);
+
+        float angle = windVector.getAngleRadians();
+        float speedFactor = windVector.getSpeedFactor();
+        float time = speedFactor * glfwGetTime();
+        float fractPart = time - static_cast<int>(time);
+        float moveFactor = 2.0f;
+
+        glm::vec3 direction = glm::vec3(windVector.direction.x, 0.0f, windVector.direction.y);
+
+        glm::mat4 vectorArrowModel = glm::mat4(1.0f);
+        vectorArrowModel = glm::translate(vectorArrowModel, windVector.position);
+        vectorArrowModel = glm::translate(vectorArrowModel, moveFactor * fractPart * direction);
+        vectorArrowModel = glm::rotate(vectorArrowModel, angle, glm::vec3(0.0f, 1.0f, 0.0f));
+        vectorArrowModel = glm::scale(vectorArrowModel, glm::vec3(1.0f, 1.0f, 0.5f));
+
+        shader.setFloat("alpha", 1.0f - fractPart);
+        shader.setMat4("model", glm::scale(vectorArrowModel, glm::vec3(1.05f, 1.0f, 1.05f)));
+        shader.setVec3("color", glm::vec3(1.0f));
+        vectorArrow.bindVertexArray();
+        vectorArrow.draw();
+
+        shader.setMat4("model", glm::translate(vectorArrowModel, glm::vec3(0.0f, 0.01f, 0.0f)));
+        shader.setVec3("color", windVector.getVectorColor());
+        vectorArrow.draw();
+
         cleanUp();
     }
 

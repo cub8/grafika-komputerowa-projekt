@@ -30,22 +30,23 @@
 #include "world_constraints.hpp"
 #include "model.hpp"
 #include "particle_system.hpp"
+#include "wind_grid.hpp"
 
 
 class Program {
 public:
     GLFWwindow *window;
-    std::optional<Shader> boxShader, planeShader, axisShader, modelShader, particleShader;
+    std::optional<Shader> boxShader, planeShader, axisShader, 
+                          modelShader, particleShader, windVectorShader;
     std::optional<Texture> texture1, texture2, texture3, psTexture;
-    std::optional<Object> box, plane, axis;
+    std::optional<Object> box, plane, axis, vectorArrow;
     std::optional<Model> powerPlantModel;
     std::array<glm::vec3, 10> cubePositions;
     Camera camera;
+    WindGrid windGrid;
 
     ParticleSystem particleSystem;
-
     std::vector<glm::vec3> plantPositions;
-
     std::optional<int> selectedPlantIndex;
 
     const unsigned int SCR_WIDTH = 1200;
@@ -91,10 +92,12 @@ public:
         initObjects();
 
         particleSystem.initialize();
+        windGrid.initialize();
 
         selectedPlantIndex.emplace(-1);
 
         camera = Camera(glm::vec3(0.0f, 10.0f, 0.0f), -90.0f, -45.0f);
+        // camera = Camera(glm::vec3(-17.0f, 10.0f, 11.0f), 90.0f, -90.0f);
     }
 
     ~Program() { glfwTerminate(); }
@@ -114,10 +117,11 @@ public:
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            // Renderer::renderBoxes(this);
+            Renderer::renderBoxes(this);
             Renderer::renderPlane(this);
             Renderer::renderAxis(this);
             Renderer::renderPlants(this);
+            Renderer::renderWindVectors(this);
             Renderer::renderParticles(this);
 
             glfwSwapBuffers(window);
@@ -159,6 +163,12 @@ public:
         return *particleShader;
     }
 
+    Shader &getWindVectorShader() {
+        if (!windVectorShader)
+            throw std::runtime_error("Wind Vector Shader not initialized");
+        return *windVectorShader;
+    }
+
     // === TEXTURES ===
 
     Texture &getTexture1() {
@@ -187,7 +197,7 @@ public:
 
     // === OBJECTS ===
 
-    Object &getObject() {
+    Object &getBox() {
         if (!box)
             throw std::runtime_error("Object not initialized");
         return *box;
@@ -211,10 +221,18 @@ public:
         return *powerPlantModel;
     }
 
+    Object &getVectorArrow() {
+        if (!vectorArrow)
+            throw std::runtime_error("Vector Arrow not initialized");
+        return *vectorArrow;
+    }
+
     // === OTHERS ===
 
     Camera &getCamera() { return camera; }
 
+    WindGrid &getWindGrid() { return windGrid; }
+    
     float getAspectRatio() const { 
         return static_cast<float>(SCR_WIDTH) / static_cast<float>(SCR_HEIGHT); 
     }
@@ -235,6 +253,7 @@ private:
         axisShader.emplace("shaders/axis.vs", "shaders/axis.fs");
         modelShader.emplace("shaders/model.vs", "shaders/model.fs");
         particleShader.emplace("shaders/particle.vs", "shaders/particle.fs");
+        windVectorShader.emplace("shaders/wind_vector.vs", "shaders/wind_vector.fs");
     }
 
     void initTextures() {
@@ -295,6 +314,22 @@ private:
         };
         auto axisAttributes = std::vector<int>{ 3, 3 };
         axis.emplace(axisVertices, sizeof(axisVertices), axisAttributes);
+
+        const float arrowVertices[] = {
+            -0.50f, 0.0f,  0.25f,
+            -0.50f, 0.0f, -0.25f,
+             0.25f, 0.0f, -0.25f,
+             
+             0.25f, 0.0f, -0.25f,
+            -0.50f, 0.0f,  0.25f,
+             0.25f, 0.0f,  0.25f,
+
+             0.25f, 0.0f, -0.50f,
+             0.25f, 0.0f,  0.50f,
+             0.75f, 0.0f,  0.00f,
+        };
+        auto arrowAttributes = std::vector<int>{ 3 };
+        vectorArrow.emplace(arrowVertices, sizeof(arrowVertices), arrowAttributes);
     }
 
     void processInput(GLFWwindow *window) {

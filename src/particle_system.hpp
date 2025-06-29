@@ -1,6 +1,11 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include <glm/gtc/random.hpp>  // for glm::linearRand
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+
+#include <iostream>
 #include <vector>
 
 struct Particle {

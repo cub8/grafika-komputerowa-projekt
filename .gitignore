@@ -1,0 +1,12 @@
+.vscode/*
+build/*
+CMakeFiles
+
+external/assimp/bin/libassimp-6.dll
+external/assimp/lib/libassimp.dll.a
+
+!build/.keep
+!external/assimp/lib/.keep
+!external/assimp/bin/.keep
+!.vscode/c_cpp_properties.json
+!.vscode/tasks.json

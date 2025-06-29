@@ -1,0 +1,23 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "type": "shell",
+      "command": "g++",
+      "args": [
+        "src/main.cpp",
+        "external/**/src/*.{c,cpp}",
+        "-Lexternal/GLFW",
+        "-lglfw3",
+        "-lgdi32",
+        "-o", "build/app.exe"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    }
+  ]
+}

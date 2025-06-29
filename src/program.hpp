@@ -89,6 +89,9 @@ public:
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+        
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
         initShaders();
         contaminationMask.initialize(SCR_WIDTH, SCR_HEIGHT);
         initTextures();
@@ -111,6 +114,11 @@ public:
             deltaTime = currentFrame - lastFrame;
             lastFrame = currentFrame;
             glfwSwapInterval(1); // fps
+
+            processInput(window);
+
+            glClearColor(0.1f, 0.1f, 0.3f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             Renderer::renderPlane(this);
             Renderer::renderAxis(this);

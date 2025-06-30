@@ -1,11 +1,6 @@
 #include "particle_system.hpp"
 
 
-ParticleSystem::ParticleSystem() {
-    windDirection = glm::normalize(glm::vec3(1.0f, 0.0f, 0.0f));
-    windVelocity = 0.2f;
-}
-
 void ParticleSystem::initialize() {
     initGLResources();
 }
@@ -70,14 +65,19 @@ void ParticleSystem::emit(const glm::vec3 &sourcePos, int count) {
         p.position = sourcePos + posOffset;
 
         // random jitter
-        p.velocity = windVelocity;
-        p.direction = windDirection + glm::vec3(
+        p.velocity = glm::linearRand(0.1f, 0.3f);
+        glm::vec3 randomWindDirection = glm::vec3(
+            glm::linearRand(-1.0f, 1.0f),
+            0.0f,
+            glm::linearRand(-1.0f, 1.0f)
+        );
+        p.direction = glm::normalize(randomWindDirection) + glm::vec3(
             glm::linearRand(-0.3f, 0.3f),
             glm::linearRand(-0.1f, 0.1f),
             glm::linearRand(-0.3f, 0.3f)
         );
 
-        p.life = glm::linearRand(2.0f, 10.0f);
+        p.life = glm::linearRand(2.0f, 20.0f);
         p.intensity = 1.0f;
         p.scale = glm::linearRand(0.1f, 0.8f);  // random scale
 
@@ -115,7 +115,7 @@ void ParticleSystem::adjustToWind(Particle& particle, WindGrid& windGrid) {
 
     for (const auto& windVector : windVectors) {
         float influence = calculateWindInfluence(particle, windVector);
-        if (influence <= 0.0f)
+        if (influence < 0.01f)
             continue;
 
         glm::vec3 windDir3D = glm::normalize(glm::vec3(windVector.direction.x, 0.0f, windVector.direction.y));
@@ -141,7 +141,7 @@ float ParticleSystem::calculateWindInfluence(Particle& particle, const WindVecto
     if (distance < 0.001f) 
         distance = 0.001f;
         
-    float influence = (windVector.velocity) / (distance + 1.0f);
+    float influence = (windVector.velocity) / (pow(distance, 2) + 1.0f);
 
     return influence;
 }

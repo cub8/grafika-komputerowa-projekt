@@ -29,8 +29,6 @@ const float windVelocityScale = 0.10f;
 
 class ParticleSystem {
 public:
-    ParticleSystem();
-
     void initialize();
     void emit(const glm::vec3& sourcePos, int count);
     void update(float deltaTime, WindGrid& windGrid);
@@ -46,9 +44,6 @@ private:
     unsigned int vboInstance = 0;
     unsigned int quadVBO = 0;
     const size_t maxParticles = 10000;
-
-    glm::vec3 windDirection;
-    float windVelocity;
 
     void initGLResources();
     void updateGPUBuffer();

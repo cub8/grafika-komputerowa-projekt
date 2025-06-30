@@ -29,6 +29,7 @@ namespace Renderer {
         box.bindVertexArray();
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(position.x, 0.0f, position.z));
+        model = glm::scale(model, glm::vec3(0.25, 0.25f, 0.25f));
         shader.setMat4("model", model);
         box.draw();
         cleanUp();
@@ -125,6 +126,9 @@ namespace Renderer {
     }
 
     void renderWindVectors(Program *program) {
+        if (!program->renderWindVectors)
+            return;
+
         for (auto &windVector : program->getWindGrid().getWindVectors()) {
             renderWindVector(program, windVector);
         }

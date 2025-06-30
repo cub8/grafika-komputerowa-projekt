@@ -51,11 +51,14 @@ public:
 
     const unsigned int SCR_WIDTH = 1200;
     const unsigned int SCR_HEIGHT = 800;
+
     float lastX = SCR_WIDTH / 2.0f;
     float lastY = SCR_HEIGHT / 2.0f;
-    bool firstMouse = true;
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
+
+    bool firstMouse = true;
+    bool renderWindVectors = true;
 
     Program(const char *programName) {
         glfwInit();
@@ -97,7 +100,6 @@ public:
         selectedPlantIndex.emplace(-1);
 
         camera = Camera(glm::vec3(0.0f, 10.0f, 0.0f), -90.0f, -45.0f);
-        // camera = Camera(glm::vec3(-17.0f, 10.0f, 11.0f), 90.0f, -90.0f);
     }
 
     ~Program() { glfwTerminate(); }
@@ -351,6 +353,24 @@ private:
             camera.ProcessKeyboard(LEFT, deltaTime);
         if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
             camera.ProcessKeyboard(RIGHT, deltaTime);
+
+        if (glfwGetKey(window, GLFW_KEY_F1) == GLFW_PRESS)
+            camera.updateAngles(90.0f, -90.0f);
+
+        if (glfwGetKey(window, GLFW_KEY_F2) == GLFW_PRESS)
+            camera.updateAngles(-90.0f, -45.0f);
+
+        if (glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS)
+            camera.CheckConstraints = true;
+
+        if (glfwGetKey(window, GLFW_KEY_F12) == GLFW_PRESS)
+            camera.CheckConstraints = false;
+
+        if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS)
+            renderWindVectors = false;
+
+        if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS)
+            renderWindVectors = true;
     }
 
     void limitFPS(float targetFPS) {

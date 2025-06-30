@@ -130,15 +130,7 @@ namespace Renderer {
         glm::mat4 view       = program->camera.GetViewMatrix();
         glm::mat4 projection = buildProjectionMatrix(program);
 
-        // 2D ground contamination
-
-        
-
-        glDisable(GL_DEPTH_TEST);
-
-        //std::cout <<  "LEFT -x  " << WorldConstraints::LEFT << "RIGHT +x " << WorldConstraints::RIGHT
-        //    << "BOTTOM +z " << WorldConstraints::BOTTOM << "TOP -z " << WorldConstraints::TOP << std::endl;
-
+        // 2D ground contamination     
 
         float realLEFT = -WorldConstraints::SCALE * WorldConstraints::ASPECT_RATIO;
         float realRIGHT = WorldConstraints::SCALE * WorldConstraints::ASPECT_RATIO;
@@ -156,13 +148,15 @@ namespace Renderer {
         program->getContaminationShader().use();
         program->contaminationMask.bind();
         
+        
         program->getContaminationShader().setMat4("view", orthoView);
         program->getContaminationShader().setMat4("projection", orthoProj);
 
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         program->particleSystem.draw();
 
         program->contaminationMask.unbind();
-        glEnable(GL_DEPTH_TEST);
 
         // 3D particles
 

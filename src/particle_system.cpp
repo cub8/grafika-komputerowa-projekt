@@ -94,6 +94,9 @@ void ParticleSystem::update(float dt) {
         it->position += it->velocity * dt;
         it->life -= dt;
         it->intensity = glm::clamp(it->life / 5.0f, 0.0f, 1.0f);
+
+        //std::cout << it->intensity << std::endl;
+
         if (it->life <= 0.0f) {
             it = particles.erase(it);
         }

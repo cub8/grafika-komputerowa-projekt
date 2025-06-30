@@ -5,11 +5,10 @@ layout (location = 1) in vec3 instancePos;
 layout (location = 2) in float intensity;    
 layout (location = 3) in float scale;        
 
-out float fIntensity;   
-out vec2 texCoord;      
-
 uniform mat4 view;      
 uniform mat4 projection;
+
+out float intens;
 
 void main() {
     
@@ -19,6 +18,6 @@ void main() {
 
     gl_Position = projection * view * vec4(worldPos, 1.0);
 
-    fIntensity = intensity;
-    texCoord = quadPos + vec2(0.5);
+    intens = intensity;
+
 }

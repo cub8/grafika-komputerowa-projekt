@@ -21,7 +21,7 @@ void main()
     }
     else if (intensity > 0.2) {
         contaminationColor = colorMid;
-    } else if (intensity > 0.1 ) {
+    } else if (intensity > 0.001 ) {
         contaminationColor = colorLow;
     }
     else {

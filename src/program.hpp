@@ -45,11 +45,19 @@ public:
 
     ParticleSystem particleSystem;
 
-    std::vector<glm::vec3> plantPositions;
-
     std::optional<int> selectedPlantIndex;
 
     Contamination contaminationMask;
+
+    struct PowerPlant {
+    glm::vec3 position;
+    float powerMW;
+
+    PowerPlant(const glm::vec3& pos, float mw)
+        : position(pos), powerMW(mw) {}
+    };
+
+    std::vector<PowerPlant> nuclearPowerPlants;
 
     const unsigned int SCR_WIDTH = 1200;
     const unsigned int SCR_HEIGHT = 800;
@@ -282,12 +290,13 @@ private:
 
     void initObjects() {
         powerPlantModel.emplace("../models/cooling_tower.obj");
-        plantPositions = {
-            {22.0f, 0.0f, 4.0f}, // Zaporoze (Ukraine)
-            {3.0f, 0.0f, -10.0f}, // Forsmark (Sweden)
-            {-10.0f, 0.0f, 1.5f}, // Gravelines (France)
-            {6.0f, 0.0f, 4.0f}, // Mochovce (Slovakia)
-            {-14.0f, 0.0f, 12.0f} // Cofrentes (Spain)
+
+        nuclearPowerPlants = {
+            { {22.0f, 0.0f, 4.0f},     6000.0f },  // Zaporoze (Ukraine)
+            { {3.0f, 0.0f, -10.0f},    3300.0f },  // Forsmark (Sweden)
+            { {-10.0f, 0.0f, 1.5f},    5600.0f },  // Gravelines (France)
+            { {6.0f, 0.0f, 4.0f},      1700.0f },  // Mochovce (Slovakia)
+            { {-14.0f, 0.0f, 12.0f},   1060.0f }   // Cofrentes (Spain)
         };
 
         auto attributes = std::vector<int>{ 3, 2 };

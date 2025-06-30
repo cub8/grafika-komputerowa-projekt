@@ -90,9 +90,10 @@ namespace Renderer {
     }
 
     void renderPlants(Program* program) {
-        for (int i = 0; i < program->plantPositions.size(); ++i) {
+        auto& plants = program->nuclearPowerPlants;
+        for (int i = 0; i < plants.size(); ++i) {
             program->getModelShader().use();
-            auto &pos = program->plantPositions[i];
+            const glm::vec3& pos = plants[i].position;
 
             if (program->getSelectedPlantIndex() == i) {
                 program->getModelShader().setVec3("overrideColor1", glm::vec3(1.f, 0.f, 0.f)); // red color if selected

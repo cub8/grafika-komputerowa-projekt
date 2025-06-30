@@ -5,7 +5,7 @@
 #include <iostream>
 
 ParticleSystem::ParticleSystem() {
-    windVelocity = glm::normalize(glm::vec3(2.f, 0.0f, 5.5f)) * 2.f;
+    windVelocity = glm::normalize(glm::vec3(20.f, 0.0f, 5.5f)) * 2.f;
 }
 
 void ParticleSystem::initialize() {
@@ -58,7 +58,23 @@ void ParticleSystem::initGLResources() {
 }
 
 
-void ParticleSystem::emit(const glm::vec3 &sourcePos, int count) {
+std::tuple<float, float, float, float, int> ParticleSystem::computeParams(float powerMW) const {
+    float t = glm::clamp(powerMW / 10000.0f, 0.0f, 1.0f);
+    float minLife = 1.0f + t * 2.0f;
+    float maxLife = 2.0f + t * 5.0f;
+    float minSize = 0.1f + t;
+    float maxSize = 0.45f + t;
+    float count = glm::clamp(static_cast<int>(powerMW * 2.5f), 1, static_cast<int>(maxParticles));
+
+    return std::make_tuple(minLife, maxLife, minSize, maxSize, count);
+}
+
+void ParticleSystem::emit(const glm::vec3 &sourcePos, int powerMW) {
+    auto [minLife, maxLife, minSize, maxSize, count] = computeParams(powerMW);
+
+    std::cout << minSize << "-min,  max- " << maxSize << std::endl;
+    std::cout << minLife << "-min,  max- " << maxLife << std::endl;
+
     for (int i = 0; i < count; ++i) {
         Particle p;
         p.position = sourcePos;
@@ -79,9 +95,9 @@ void ParticleSystem::emit(const glm::vec3 &sourcePos, int count) {
             glm::linearRand(-0.3f, 0.3f)
         );
 
-        p.life = glm::linearRand(2.0f, 5.0f);
-        p.intensity = 1.0f;
-        p.scale = glm::linearRand(0.1f, 0.8f);  // random scale
+        p.life = glm::linearRand(minLife, maxLife);
+        p.intensity = 50.0f;
+        p.scale = glm::linearRand(minSize, maxSize);  // scale from powerMW
 
         particles.push_back(p);
 
@@ -93,9 +109,8 @@ void ParticleSystem::update(float dt) {
     for (auto it = particles.begin(); it != particles.end(); ) {
         it->position += it->velocity * dt;
         it->life -= dt;
-        it->intensity = glm::clamp(it->life / 5.0f, 0.0f, 1.0f);
+        it->intensity = it->life;
 
-        //std::cout << it->intensity << std::endl;
 
         if (it->life <= 0.0f) {
             it = particles.erase(it);

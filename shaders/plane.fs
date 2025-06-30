@@ -16,12 +16,12 @@ void main()
     vec3 colorHigh = vec3(1.0, 0.0, 0.0); // red
     vec3 contaminationColor;
 
-    if (intensity > 0.55) {
+    if (intensity > 0.7) {
         contaminationColor = colorHigh;
     }
-    else if (intensity > 0.4) {
+    else if (intensity > 0.2) {
         contaminationColor = colorMid;
-    } else if (intensity > 0.2 ) {
+    } else if (intensity > 0.1 ) {
         contaminationColor = colorLow;
     }
     else {

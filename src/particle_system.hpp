@@ -22,7 +22,7 @@ public:
     ParticleSystem();
 
     void initialize();
-    void emit(const glm::vec3& sourcePos, int count);
+    void emit(const glm::vec3& sourcePos, int powerMW);
     void update(float dt);
     void draw();
 
@@ -33,10 +33,12 @@ private:
     unsigned int vao = 0;
     unsigned int vboInstance = 0;
     unsigned int quadVBO = 0;
-    const size_t maxParticles = 10000;
+    const size_t maxParticles = 50000;
 
     glm::vec3 windVelocity;
 
     void initGLResources();
     void updateGPUBuffer();
+    std::tuple<float, float, float, float, int> computeParams(float powerMW) const;
+
 };

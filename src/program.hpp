@@ -51,6 +51,13 @@ public:
     std::optional<Model> powerPlantModel;
     std::array<glm::vec3, 10> cubePositions;
     std::vector<PowerPlant> nuclearPowerPlants;
+    std::vector<std::string> plantNames = {
+    "Zaporozhye",
+    "Forsmark",
+    "Chooz",
+    "Mochovce",
+    "Vandellos"
+    };
     std::optional<int> selectedPlantIndex;
 
     Camera camera;
@@ -229,9 +236,9 @@ private:
 
         nuclearPowerPlants = {
             { {22.0f, 0.0f, 4.0f},     6000.0f },
-            { {3.0f, 0.0f, -10.0f},    3300.0f },
-            { {-10.0f, 0.0f, 1.5f},    5600.0f },
-            { {6.0f, 0.0f, 4.0f},      1700.0f },
+            { {3.0f, 0.0f, -10.0f},    3000.0f },
+            { {-10.0f, 0.0f, 1.5f},    3120.0f },
+            { {6.0f, 0.0f, 4.0f},      1950.0f },
             { {-14.0f, 0.0f, 12.0f},   1060.0f }
         };
 

@@ -53,7 +53,8 @@ if (selectedIndex >= 0 && selectedIndex < program->nuclearPowerPlants.size()) {
     ImGui::Text("No plant selected");
 }
 
-if (ImGui::Button("Explosion") && selectedIndex >= 0 && selectedIndex < program->nuclearPowerPlants.size()) {
+ImVec2 bigButtonSize(300, 100); 
+if (ImGui::Button("Explosion", bigButtonSize) && selectedIndex >= 0 && selectedIndex < program->nuclearPowerPlants.size()) {
     auto& plant = program->nuclearPowerPlants[selectedIndex];
     glm::vec3 pos = plant.position;
     program->particleSystem.emit(pos + glm::vec3(0, 2.5f, 0), plant.powerMW);
@@ -62,6 +63,7 @@ if (ImGui::Button("Explosion") && selectedIndex >= 0 && selectedIndex < program-
 
 ImGui::End();
 
+ImGui::SetNextWindowPos(ImVec2(400, 100), ImGuiCond_Once);
 ImGui::Begin("Controls");
 
 if (ImGui::Button("Show Wind Vectors")) {

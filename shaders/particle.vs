@@ -3,7 +3,7 @@
 layout (location = 0) in vec2 quadPos;       
 layout (location = 1) in vec3 instancePos;   
 layout (location = 2) in float intensity;    
-layout (location = 2) in float scale;   
+layout (location = 3) in float scale;   
 
 out float fIntensity;
 out vec2 texCoord;

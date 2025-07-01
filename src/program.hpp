@@ -30,31 +30,47 @@
 #include "world_constraints.hpp"
 #include "model.hpp"
 #include "particle_system.hpp"
+#include "contamination.hpp"
+#include "wind_grid.hpp"
 
 
 class Program {
 public:
     GLFWwindow *window;
-    std::optional<Shader> boxShader, planeShader, axisShader, modelShader, particleShader;
+    std::optional<Shader> boxShader, planeShader, axisShader, modelShader, particleShader, windVectorShader, contaminationShader;
     std::optional<Texture> texture1, texture2, texture3, psTexture;
-    std::optional<Object> box, plane, axis;
+    std::optional<Object> box, plane, axis, vectorArrow;
     std::optional<Model> powerPlantModel;
     std::array<glm::vec3, 10> cubePositions;
-    Camera camera;
+    std::vector<glm::vec3> plantPositions;
+    std::optional<int> selectedPlantIndex;
 
+    Camera camera;
+    WindGrid windGrid;
+    Contamination contaminationMask;
     ParticleSystem particleSystem;
 
-    std::vector<glm::vec3> plantPositions;
 
-    std::optional<int> selectedPlantIndex;
+    struct PowerPlant {
+        glm::vec3 position;
+        float powerMW;
+
+        PowerPlant(const glm::vec3& pos, float mw)
+            : position(pos), powerMW(mw) {}
+    };
+
+    std::vector<PowerPlant> nuclearPowerPlants;
 
     const unsigned int SCR_WIDTH = 1200;
     const unsigned int SCR_HEIGHT = 800;
+
     float lastX = SCR_WIDTH / 2.0f;
     float lastY = SCR_HEIGHT / 2.0f;
-    bool firstMouse = true;
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
+
+    bool firstMouse = true;
+    bool renderWindVectors = true;
 
     Program(const char *programName) {
         glfwInit();
@@ -86,11 +102,17 @@ public:
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+        
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
         initShaders();
+        contaminationMask.initialize(SCR_WIDTH, SCR_HEIGHT);
+        contaminationMask.clear();  
         initTextures();
         initObjects();
 
         particleSystem.initialize();
+        windGrid.initialize();
 
         selectedPlantIndex.emplace(-1);
 
@@ -106,23 +128,25 @@ public:
             float currentFrame = static_cast<float>(glfwGetTime());
             deltaTime = currentFrame - lastFrame;
             lastFrame = currentFrame;
-
-            glfwSwapInterval(1);
+            glfwSwapInterval(1); // fps
 
             processInput(window);
 
-            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            glClearColor(0.1f, 0.1f, 0.3f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            // Renderer::renderBoxes(this);
+            particleSystem.update(deltaTime, windGrid);
+
+            Renderer::renderBoxes(this);
             Renderer::renderPlane(this);
             Renderer::renderAxis(this);
             Renderer::renderPlants(this);
+            Renderer::renderWindVectors(this);
             Renderer::renderParticles(this);
+
 
             glfwSwapBuffers(window);
             glfwPollEvents();
-
             limitFPS(60);
         }
     }
@@ -153,10 +177,22 @@ public:
         return *modelShader;
     }
 
-    Shader &getParticleShader() {
-        if (!particleShader)
-            throw std::runtime_error("Particle Shader not initialized");
-        return *particleShader;
+    Shader& getParticleShader() {
+    if (!particleShader)
+        throw std::runtime_error("Particle Shader not initialized");
+    return *particleShader;
+    }
+
+    Shader& getContaminationShader() {
+        if (!contaminationShader)
+            throw std::runtime_error("Contamination Shader not initialized");
+        return *contaminationShader;
+    }
+
+    Shader &getWindVectorShader() {
+        if (!windVectorShader)
+            throw std::runtime_error("Wind Vector Shader not initialized");
+        return *windVectorShader;
     }
 
     // === TEXTURES ===
@@ -187,7 +223,7 @@ public:
 
     // === OBJECTS ===
 
-    Object &getObject() {
+    Object &getBox() {
         if (!box)
             throw std::runtime_error("Object not initialized");
         return *box;
@@ -211,10 +247,18 @@ public:
         return *powerPlantModel;
     }
 
+    Object &getVectorArrow() {
+        if (!vectorArrow)
+            throw std::runtime_error("Vector Arrow not initialized");
+        return *vectorArrow;
+    }
+
     // === OTHERS ===
 
     Camera &getCamera() { return camera; }
 
+    WindGrid &getWindGrid() { return windGrid; }
+    
     float getAspectRatio() const { 
         return static_cast<float>(SCR_WIDTH) / static_cast<float>(SCR_HEIGHT); 
     }
@@ -235,6 +279,8 @@ private:
         axisShader.emplace("shaders/axis.vs", "shaders/axis.fs");
         modelShader.emplace("shaders/model.vs", "shaders/model.fs");
         particleShader.emplace("shaders/particle.vs", "shaders/particle.fs");
+        contaminationShader.emplace("shaders/contamination.vs", "shaders/contamination.fs");
+        windVectorShader.emplace("shaders/wind_vector.vs", "shaders/wind_vector.fs");
     }
 
     void initTextures() {
@@ -247,8 +293,18 @@ private:
         getBoxShader().setInt("texture1", 0);
         getBoxShader().setInt("texture2", 1);
 
+
         getPlaneShader().use();
+
+        // slot 0 
+        glActiveTexture(GL_TEXTURE0);
+        texture3->bindTexture(GL_TEXTURE0);
         getPlaneShader().setInt("Tex", 0);
+
+        // slot 1 
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, contaminationMask.getTextureID());
+        getPlaneShader().setInt("ContaminationTex", 1);
 
         getParticleShader().use();
         getParticleShader().setInt("particleTexture", 0);
@@ -258,12 +314,13 @@ private:
 
     void initObjects() {
         powerPlantModel.emplace("../models/cooling_tower.obj");
-        plantPositions = {
-            {22.0f, 0.0f, 4.0f}, // Zaporoze (Ukraine)
-            {3.0f, 0.0f, -10.0f}, // Forsmark (Sweden)
-            {-10.0f, 0.0f, 1.5f}, // Gravelines (France)
-            {6.0f, 0.0f, 4.0f}, // Mochovce (Slovakia)
-            {-14.0f, 0.0f, 12.0f} // Cofrentes (Spain)
+
+        nuclearPowerPlants = {
+            { {22.0f, 0.0f, 4.0f},     6000.0f },  // Zaporoze (Ukraine)
+            { {3.0f, 0.0f, -10.0f},    3300.0f },  // Forsmark (Sweden)
+            { {-10.0f, 0.0f, 1.5f},    5600.0f },  // Gravelines (France)
+            { {6.0f, 0.0f, 4.0f},      1700.0f },  // Mochovce (Slovakia)
+            { {-14.0f, 0.0f, 12.0f},   1060.0f }   // Cofrentes (Spain)
         };
 
         auto attributes = std::vector<int>{ 3, 2 };
@@ -295,6 +352,22 @@ private:
         };
         auto axisAttributes = std::vector<int>{ 3, 3 };
         axis.emplace(axisVertices, sizeof(axisVertices), axisAttributes);
+
+        const float arrowVertices[] = {
+            -0.50f, 0.0f,  0.25f,
+            -0.50f, 0.0f, -0.25f,
+             0.25f, 0.0f, -0.25f,
+             
+             0.25f, 0.0f, -0.25f,
+            -0.50f, 0.0f,  0.25f,
+             0.25f, 0.0f,  0.25f,
+
+             0.25f, 0.0f, -0.50f,
+             0.25f, 0.0f,  0.50f,
+             0.75f, 0.0f,  0.00f,
+        };
+        auto arrowAttributes = std::vector<int>{ 3 };
+        vectorArrow.emplace(arrowVertices, sizeof(arrowVertices), arrowAttributes);
     }
 
     void processInput(GLFWwindow *window) {
@@ -314,6 +387,27 @@ private:
             camera.ProcessKeyboard(LEFT, deltaTime);
         if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
             camera.ProcessKeyboard(RIGHT, deltaTime);
+
+        if (glfwGetKey(window, GLFW_KEY_F1) == GLFW_PRESS)
+            camera.updateAngles(90.0f, -90.0f);
+
+        if (glfwGetKey(window, GLFW_KEY_F2) == GLFW_PRESS)
+            camera.updateAngles(-90.0f, -45.0f);
+
+        if (glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS)
+            camera.CheckConstraints = true;
+
+        if (glfwGetKey(window, GLFW_KEY_F12) == GLFW_PRESS)
+            camera.CheckConstraints = false;
+
+        if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS)
+            renderWindVectors = false;
+
+        if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS)
+            renderWindVectors = true;
+
+        if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
+            contaminationMask.clear();  
     }
 
     void limitFPS(float targetFPS) {

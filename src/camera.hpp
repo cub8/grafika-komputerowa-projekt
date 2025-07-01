@@ -42,6 +42,8 @@ public:
     float MouseSensitivity;
     float Zoom;
 
+    bool CheckConstraints;
+
     // constructor with vectors
     Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), float yaw = YAW, float pitch = PITCH) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM) {
         Position = position;
@@ -49,6 +51,7 @@ public:
         Yaw = yaw;
         Pitch = pitch;
         DefaultSpeed = MovementSpeed;
+        CheckConstraints = true;
         updateCameraVectors();
     }
 
@@ -113,6 +116,12 @@ public:
         MovementSpeed = DefaultSpeed;
     }
 
+    void updateAngles(float yaw, float pitch) {
+        Yaw = yaw;
+        Pitch = pitch;
+        updateCameraVectors();
+    }
+
 private:
     // calculates the front vector from the Camera's (updated) Euler Angles
     void updateCameraVectors() {
@@ -128,7 +137,9 @@ private:
     }
 
     void validateCameraPosition() {
-        // std::cout << "Position: (x=" << Position.x << ", y=" << Position.y << ", z=" << Position.z << ")" << std::endl;
+        std::cout << "Position: (x=" << Position.x << ", y=" << Position.y << ", z=" << Position.z << ")" << std::endl;
+        if (!CheckConstraints)
+            return;
 
         if (Position.x < WorldConstraints::LEFT)
             Position.x = WorldConstraints::LEFT;

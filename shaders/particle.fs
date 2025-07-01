@@ -10,7 +10,7 @@ uniform sampler2D particleTexture;
 void main() {
 
     vec4 tex = texture(particleTexture, texCoord);
-    vec3 color = mix(vec3(0.2), vec3(1.0, 0.0, 0.0), fIntensity);  // from gray to red
+    vec3 color = mix(vec3(0.7), vec3(0.1, 0.1, 0.15), 0.2);  // from gray to red
     float alpha = tex.a * fIntensity;
 
     FragColor = vec4(color, alpha);

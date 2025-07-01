@@ -109,19 +109,14 @@ namespace Callbacks {
 
             int i = 0;
             bool found = false;
-            for (auto& pos : program->plantPositions) {
+            for (auto& plant : program->nuclearPowerPlants) {
+                glm::vec3 pos = plant.position;
                 BoundingBox box;
                 float s = 0.5f;
                 box.min = pos - glm::vec3(s, 0.0f, s);
                 box.max = pos + glm::vec3(s, 1.5f, s);
                 if (box.intersectsRay(origin, dir)) {
-
-                    std::cout << "Kabooooom! at ("
-                            << pos.x << ", " << pos.y << ", " << pos.z << ")\n";
-
-                    program->particleSystem.emit(pos + glm::vec3(0, 2.5f, 0), 5000);  // number of particles
-                
-                    // index to color the Plant
+                    program->particleSystem.emit(pos + glm::vec3(0, 2.5f, 0), plant.powerMW);  // number of particles
                     program->selectedPlantIndex = i;
                     found = true;
                     break;

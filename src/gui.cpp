@@ -37,34 +37,9 @@ void Gui::endFrame() {
 }
 
 void Gui::render(Program* program) {
-ImGui::Begin("BOOOM!");
 
-int selectedIndex = program->selectedPlantIndex.value_or(-1);
-
-if (selectedIndex >= 0 && selectedIndex < program->nuclearPowerPlants.size()) {
-    const auto& plant = program->nuclearPowerPlants[selectedIndex];
-    const std::string& name = program->plantNames[selectedIndex];
-
-    ImGui::Text("Selected Plant: %s", name.c_str());
-    ImGui::Text("Power: %.1f MW", plant.powerMW);
-
-    ImGui::SliderFloat("Set Power", &program->nuclearPowerPlants[selectedIndex].powerMW, 500.0f, 10000.0f);
-} else {
-    ImGui::Text("No plant selected");
-}
-
-ImVec2 bigButtonSize(300, 100); 
-if (ImGui::Button("Explosion", bigButtonSize) && selectedIndex >= 0 && selectedIndex < program->nuclearPowerPlants.size()) {
-    auto& plant = program->nuclearPowerPlants[selectedIndex];
-    glm::vec3 pos = plant.position;
-    program->particleSystem.emit(pos + glm::vec3(0, 2.5f, 0), plant.powerMW);
-    program->contaminationMask.initialize(program->SCR_WIDTH, program->SCR_HEIGHT);
-}
-
-ImGui::End();
-
-ImGui::SetNextWindowPos(ImVec2(400, 100), ImGuiCond_Once);
-ImGui::Begin("Controls");
+    ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_Once);
+    ImGui::Begin("Controls");
 
 if (ImGui::Button("Show Wind Vectors")) {
     program->renderWindVectors = true;
@@ -79,5 +54,33 @@ if (ImGui::Button("Clear Contamination")) {
 }
 
 ImGui::End();
+
+ImGui::SetNextWindowPos(ImVec2(10, 110), ImGuiCond_Once);
+ImGui::Begin("BOOOM!");
+
+int selectedIndex = program->selectedPlantIndex.value_or(-1);
+
+if (selectedIndex >= 0 && selectedIndex < program->nuclearPowerPlants.size()) {
+    const auto& plant = program->nuclearPowerPlants[selectedIndex];
+    const std::string& name = program->plantNames[selectedIndex];
+
+    ImGui::Text("Selected Plant: %s", name.c_str());
+    ImGui::Text("Power: %.1f MW", plant.powerMW);
+
+    ImGui::SliderFloat("Set Power", &program->nuclearPowerPlants[selectedIndex].powerMW, 500.0f, 8000.0f);
+} else {
+    ImGui::Text("No plant selected");
+}
+
+ImVec2 bigButtonSize(300, 100); 
+if (ImGui::Button("Explosion", bigButtonSize) && selectedIndex >= 0 && selectedIndex < program->nuclearPowerPlants.size()) {
+    auto& plant = program->nuclearPowerPlants[selectedIndex];
+    glm::vec3 pos = plant.position;
+    program->particleSystem.emit(pos + glm::vec3(0, 2.5f, 0), plant.powerMW);
+    program->contaminationMask.initialize(program->SCR_WIDTH, program->SCR_HEIGHT);
+}
+
+ImGui::End();
+
 
 }

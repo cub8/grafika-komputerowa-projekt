@@ -4,6 +4,9 @@
 #include "callbacks.hpp"
 #include "program.hpp"
 
+#include <imgui.h>
+#include <backends/imgui_impl_glfw.h>
+
 #include <glm/gtc/matrix_inverse.hpp> 
 #include <iostream>
 
@@ -14,8 +17,7 @@ namespace Callbacks {
         void *ptr = glfwGetWindowUserPointer(window);
         if (ptr) {
             program = static_cast<Program *>(ptr);
-        }
-        else {
+        } else {
             throw std::runtime_error("Mouse: can't find window pointer");
         }
 
@@ -37,15 +39,13 @@ namespace Callbacks {
         program->camera.ProcessMouseMovement(xoffset, yoffset);
     }
 
-    void scrollCallback(GLFWwindow *window, double xoffset,
-        double yoffset) {
+    void scrollCallback(GLFWwindow *window, double xoffset, double yoffset) {
         Program *program;
 
         void *ptr = glfwGetWindowUserPointer(window);
         if (ptr) {
             program = static_cast<Program *>(ptr);
-        }
-        else {
+        } else {
             throw std::runtime_error("Scroll: can't find window pointer");
         }
 
@@ -56,7 +56,6 @@ namespace Callbacks {
         glViewport(0, 0, width, height);
     }
 
-    // check whether the ray intersects a nuclear plant
     bool BoundingBox::intersectsRay(const glm::vec3& origin, const glm::vec3& dir) {
         float tmin = (min.x - origin.x) / dir.x;
         float tmax = (max.x - origin.x) / dir.x;
@@ -77,14 +76,10 @@ namespace Callbacks {
         return !((tmin > tzmax) || (tzmin > tmax));
     }
 
-
-    // raycasting
     glm::vec3 screenToWorldRay(double xpos, double ypos, Program* program) {
+        float x = (2.0f * xpos) / program->SCR_WIDTH - 1.0f;
+        float y = 1.0f - (2.0f * ypos) / program->SCR_HEIGHT;
 
-        float x = (2.0f * xpos) / program->SCR_WIDTH - 1.0f;  // convert X 
-        float y = 1.0f - (2.0f * ypos) / program->SCR_HEIGHT; // convert Y
-
-        // transformations
         glm::vec4 rayClip = glm::vec4(x, y, -1.0f, 1.0f);
 
         glm::mat4 projection = glm::perspective(glm::radians(program->getFov()), program->getAspectRatio(), 0.1f, 100.0f);
@@ -97,8 +92,15 @@ namespace Callbacks {
         return glm::normalize(rayWorld);
     }
 
-    // check mouse click within the bounding box
     void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
+        // Przekaż zdarzenie do ImGui
+        ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
+
+        // Jeśli ImGui chce przejąć kliknięcie – zakończ
+        if (ImGui::GetIO().WantCaptureMouse)
+            return;
+
+        // Twoja własna obsługa kliknięcia
         if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
             Program* program = static_cast<Program*>(glfwGetWindowUserPointer(window));
             double xpos, ypos;
@@ -116,19 +118,17 @@ namespace Callbacks {
                 box.min = pos - glm::vec3(s, 0.0f, s);
                 box.max = pos + glm::vec3(s, 1.5f, s);
                 if (box.intersectsRay(origin, dir)) {
-                    program->particleSystem.emit(pos + glm::vec3(0, 2.5f, 0), plant.powerMW);  // number of particles
+                    program->particleSystem.emit(pos + glm::vec3(0, 2.5f, 0), plant.powerMW);
                     program->selectedPlantIndex = i;
                     found = true;
                     break;
                 }
                 ++i;
             }
-            
+
             if (!found) {
                 program->selectedPlantIndex = -1;
             }
         }
     }
 }
-
-

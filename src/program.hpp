@@ -405,6 +405,9 @@ private:
 
         if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS)
             renderWindVectors = true;
+
+        if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
+            contaminationMask.clear();  
     }
 
     void limitFPS(float targetFPS) {

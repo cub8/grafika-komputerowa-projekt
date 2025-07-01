@@ -10,6 +10,7 @@
 #include <glm/gtc/matrix_inverse.hpp> 
 #include <iostream>
 
+
 namespace Callbacks {
     void mouseCallback(GLFWwindow *window, double xposIn, double yposIn) {
         Program *program;
@@ -93,7 +94,6 @@ namespace Callbacks {
     }
 
     void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
-        // Przekaż zdarzenie do ImGui
         ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
 
         // Jeśli ImGui chce przejąć kliknięcie – zakończ
@@ -118,7 +118,6 @@ namespace Callbacks {
                 box.min = pos - glm::vec3(s, 0.0f, s);
                 box.max = pos + glm::vec3(s, 1.5f, s);
                 if (box.intersectsRay(origin, dir)) {
-                    program->particleSystem.emit(pos + glm::vec3(0, 2.5f, 0), plant.powerMW);
                     program->selectedPlantIndex = i;
                     found = true;
                     break;

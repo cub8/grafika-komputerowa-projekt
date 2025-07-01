@@ -38,8 +38,26 @@ void Gui::endFrame() {
 
 void Gui::render(Program* program) {
     ImGui::Begin("BOOOM!");
-    if (ImGui::Button("Explosion")) {
-        std::cout << "Button was clicked!\n";
+
+    if (program->selectedPlantIndex && *program->selectedPlantIndex >= 0) {
+        const auto& plant = program->nuclearPowerPlants[*program->selectedPlantIndex];
+        const auto& pos = plant.position;
+
+        ImGui::Text("Zaznaczona elektrownia:");
+        ImGui::BulletText("Index: %d", *program->selectedPlantIndex);
+        ImGui::BulletText("Pozycja: (x=%.2f, y=%.2f, z=%.2f)", pos.x, pos.y, pos.z);
+        ImGui::BulletText("Moc: %.1f MW", plant.powerMW);
+
+        if (ImGui::Button("Explosion")) {
+            program->particleSystem.emit(pos + glm::vec3(0, 2.5f, 0), plant.powerMW);
+            program->contaminationMask.initialize(program->SCR_WIDTH, program->SCR_HEIGHT);
+            program->contaminationMask.clear();
+
+            std::cout << "Wysadzono elektrownię: " << *program->selectedPlantIndex << "\n";
+        }
+    } else {
+        ImGui::Text("Nie wybrano żadnej elektrowni.");
     }
+
     ImGui::End();
 }

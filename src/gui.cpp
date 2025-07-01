@@ -37,27 +37,28 @@ void Gui::endFrame() {
 }
 
 void Gui::render(Program* program) {
-    ImGui::Begin("BOOOM!");
+ImGui::Begin("BOOOM!");
 
-    if (program->selectedPlantIndex && *program->selectedPlantIndex >= 0) {
-        const auto& plant = program->nuclearPowerPlants[*program->selectedPlantIndex];
-        const auto& pos = plant.position;
+int selectedIndex = program->selectedPlantIndex.value_or(-1);
 
-        ImGui::Text("Zaznaczona elektrownia:");
-        ImGui::BulletText("Index: %d", *program->selectedPlantIndex);
-        ImGui::BulletText("Pozycja: (x=%.2f, y=%.2f, z=%.2f)", pos.x, pos.y, pos.z);
-        ImGui::BulletText("Moc: %.1f MW", plant.powerMW);
+if (selectedIndex >= 0 && selectedIndex < program->nuclearPowerPlants.size()) {
+    const auto& plant = program->nuclearPowerPlants[selectedIndex];
+    const std::string& name = program->plantNames[selectedIndex];
 
-        if (ImGui::Button("Explosion")) {
-            program->particleSystem.emit(pos + glm::vec3(0, 2.5f, 0), plant.powerMW);
-            program->contaminationMask.initialize(program->SCR_WIDTH, program->SCR_HEIGHT);
-            program->contaminationMask.clear();
+    ImGui::Text("Selected Plant: %s", name.c_str());
+    ImGui::Text("Power: %.1f MW", plant.powerMW);
 
-            std::cout << "Wysadzono elektrownię: " << *program->selectedPlantIndex << "\n";
-        }
-    } else {
-        ImGui::Text("Nie wybrano żadnej elektrowni.");
-    }
+    ImGui::SliderFloat("Set Power", &program->nuclearPowerPlants[selectedIndex].powerMW, 500.0f, 10000.0f);
+} else {
+    ImGui::Text("No plant selected");
+}
 
-    ImGui::End();
+if (ImGui::Button("Explosion") && selectedIndex >= 0 && selectedIndex < program->nuclearPowerPlants.size()) {
+    auto& plant = program->nuclearPowerPlants[selectedIndex];
+    glm::vec3 pos = plant.position;
+    program->particleSystem.emit(pos + glm::vec3(0, 2.5f, 0), plant.powerMW);
+    program->contaminationMask.initialize(program->SCR_WIDTH, program->SCR_HEIGHT);
+}
+
+ImGui::End();
 }

@@ -61,4 +61,21 @@ if (ImGui::Button("Explosion") && selectedIndex >= 0 && selectedIndex < program-
 }
 
 ImGui::End();
+
+ImGui::Begin("Controls");
+
+if (ImGui::Button("Show Wind Vectors")) {
+    program->renderWindVectors = true;
+}
+
+if (ImGui::Button("Hide Wind Vectors")) {
+    program->renderWindVectors = false;
+}
+
+if (ImGui::Button("Clear Contamination")) {
+    program->contaminationMask.clear();
+}
+
+ImGui::End();
+
 }

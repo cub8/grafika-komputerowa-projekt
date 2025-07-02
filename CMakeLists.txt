@@ -1,46 +1,65 @@
 cmake_minimum_required(VERSION 3.10)
-project(OpenGLProject)
+project(NuclearExplosionSim)
 
 set(CMAKE_CXX_STANDARD 17)
 
-file(GLOB_RECURSE EXTERNAL_SOURCES
-    ${CMAKE_SOURCE_DIR}/external/*.c
-    ${CMAKE_SOURCE_DIR}/external/*.cpp
+set(IMGUI_SOURCES
+    external/imgui/imgui.cpp
+    external/imgui/imgui_draw.cpp
+    external/imgui/imgui_widgets.cpp
+    external/imgui/imgui_tables.cpp
+    external/imgui/imgui_demo.cpp
+    external/imgui/backends/imgui_impl_glfw.cpp
+    external/imgui/backends/imgui_impl_opengl3.cpp
 )
 
-set(SOURCES
+set(EXTERNAL_SOURCES
+    external/glad/src/glad.c
+    external/stb_image/src/stb_image.cpp
+)
+
+set(PROJECT_SOURCES
     src/main.cpp
     src/callbacks.cpp
     src/renderer.cpp
     src/model.cpp
     src/particle_system.cpp
     src/contamination.cpp
-    ${EXTERNAL_SOURCES}
-    ${INTERNAL_SOURCES}
+    src/gui.cpp
 )
+
 configure_file(
     configuration/root_directory.h.in 
     ${CMAKE_BINARY_DIR}/configuration/root_directory.h
-    )
-
-# Include directories
-include_directories(
-    ${CMAKE_BINARY_DIR}/configuration
-    external 
-    src
-    external/assimp/include
 )
 
-# Link GLFW (static)
+include_directories(
+    ${CMAKE_BINARY_DIR}/configuration
+    external
+    external/imgui
+    external/imgui/backends
+    external/stb_image
+    external/assimp/include
+    src
+)
+
 link_directories(
     ${CMAKE_SOURCE_DIR}/external/GLFW
     ${CMAKE_SOURCE_DIR}/external/assimp/lib
-    )
+)
 
-add_executable(main ${SOURCES})
+add_executable(main
+    ${PROJECT_SOURCES}
+    ${IMGUI_SOURCES}
+    ${EXTERNAL_SOURCES}
+)
 
-# Link dependencies
-target_link_libraries(main glfw3 gdi32 assimp)
+target_link_libraries(main
+    glfw3
+    gdi32
+    assimp
+    opengl32
+)
 
 add_custom_command(TARGET main POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different

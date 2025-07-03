@@ -1,5 +1,22 @@
 # Projekt Grafika symulacja eksplozji elektrowni jądrowej
 
+
+![Simulation view](ss1.png)
+*Widok początkowy*
+
+<br>
+
+![Explosion view](ss2.png)
+*Wybuch elektrowni*
+
+<br>
+
+![After explosion view](ss3.png)
+*Skażenie po wybuchu*
+
+<br>
+
+
 ## Wymagania
 
 - GCC

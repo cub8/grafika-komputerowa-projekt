@@ -73,6 +73,7 @@ public:
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
     bool renderWindVectors = true;
+    bool renderAxis = false;
 
     Program(const char* programName) {
         glfwInit();
@@ -142,7 +143,10 @@ public:
 
             Renderer::renderBoxes(this);
             Renderer::renderPlane(this);
-            Renderer::renderAxis(this);
+
+            if (renderAxis)
+                Renderer::renderAxis(this);
+            
             Renderer::renderPlants(this);
 
             if (renderWindVectors)
@@ -311,6 +315,11 @@ private:
             renderWindVectors = true;
         if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS)
             renderWindVectors = false;
+
+        if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS)
+            renderAxis = true;
+        if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS)
+            renderAxis = false;
     }
 
     void limitFPS(float targetFPS) {

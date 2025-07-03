@@ -6,7 +6,6 @@
 #include <string>
 #include <vector>
 
-
 using namespace std;
 
 struct Vertex {
@@ -43,8 +42,7 @@ class Mesh {
             unsigned int specularNr = 1;
             for(unsigned int i = 0; i < textures.size(); i++)
             {
-                glActiveTexture(GL_TEXTURE0 + i); // activate proper texture unit before binding
-                // retrieve texture number (the N in diffuse_textureN)
+                glActiveTexture(GL_TEXTURE0 + i);
                 string number;
                 string name = textures[i].type;
                 if(name == "texture_diffuse")
@@ -57,7 +55,6 @@ class Mesh {
             }
             glActiveTexture(GL_TEXTURE0);
 
-            // draw mesh
             glBindVertexArray(VAO);
             glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
             glBindVertexArray(0);
@@ -65,7 +62,6 @@ class Mesh {
 
 
     private:
-        //  render data
         unsigned int VAO, VBO, EBO;
 
         void setupMesh()

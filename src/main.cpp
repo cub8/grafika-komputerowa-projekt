@@ -6,7 +6,7 @@ int main() {
         program.renderLoop();
     } catch (const std::exception& e) {
         std::cerr << "Exception: " << e.what() << "\n";
-        std::cin.get(); // poczekaj na Enter
+        std::cin.get();
     }
     return 0;
 }

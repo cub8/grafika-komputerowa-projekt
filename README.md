@@ -5,16 +5,12 @@
 - GCC
 - CMake
 - Ninja
-
-Plus ja wszystko ogarniałem tutaj na Windowsie, także jak robicie na innych systemach to trzeba będzie coś pokombinować z dokumentacją jak to ogarnąć.
-
-Nie jestem też pewien czy nie będziecie musieli na nowo skompilować glfw.
-
-A i nie trzymajcie tego w ścieżce z polskimi znakami bo się skicha!
+- Windows
+- Pod żadnym pozorem nie trzymać projektu w ścieżce z polskimi znakami
 
 ## Kompilacja assimp
 
-Assimp jest bardzo niegrzeczną biblioteką i w związku z tym trzeba ją ręcznie skompilować. Pff.
+Assimpa należy ręcznie skompilować.
 
 ### Pobierz repozytorium
 
@@ -36,7 +32,11 @@ $ cmake --build .
 
 Interesują nas tylko dwa pliki: `lib/libassimp.dll.a` oraz `bin/libassimp-6.dll`. Wybieramy je kompujemy do `external/assimp/lib` oraz `external/assimp/bin`,
 
-## Kompilacja
+## GLFW
+
+Istnieje prawdopodobieństwo, że należy skompilować GLFW. Robi się to podobnie jak assimpa, z tą różnicą, że kopiujemy `libglfw3.a` pod ścieżkę `external/GLFW` 
+
+## Kompilacja Projektu
 
 1. Tworzymy folder `build` i wchodzimy do niego
 
@@ -60,8 +60,9 @@ $ cmake --build .
 $ cmake --build ./build
 ```
 
-4. Uruchomienie
+4. Uruchamiamy
 
 ```bash
-$ ./build/main.exe
+$ cd ./build
+$ ./main.exe
 ```

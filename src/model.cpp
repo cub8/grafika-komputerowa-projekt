@@ -5,8 +5,7 @@
 #include <stb_image/stb_image.h>
 
 
-unsigned int TextureFromFileGL(const char *path, const string &directory, bool gamma)
-{
+unsigned int TextureFromFileGL(const char *path, const string &directory, bool gamma) {
     string filename = string(path);
     filename = directory + '/' + filename;
 
@@ -15,8 +14,7 @@ unsigned int TextureFromFileGL(const char *path, const string &directory, bool g
 
     int width, height, nrComponents;
     unsigned char *data = stbi_load(filename.c_str(), &width, &height, &nrComponents, 0);
-    if (data)
-    {
+    if (data) {
         GLenum format;
         if (nrComponents == 1)
             format = GL_RED;
@@ -36,8 +34,7 @@ unsigned int TextureFromFileGL(const char *path, const string &directory, bool g
 
         stbi_image_free(data);
     }
-    else
-    {
+    else {
         std::cout << "Texture failed to load at path: " << path << std::endl;
         stbi_image_free(data);
     }

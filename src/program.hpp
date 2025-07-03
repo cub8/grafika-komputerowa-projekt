@@ -166,7 +166,7 @@ public:
     Shader& getAxisShader()      { return getShader(axisShader, "Axis"); }
     Shader& getModelShader()     { return getShader(modelShader, "Model"); }
     Shader& getParticleShader()  { return getShader(particleShader, "Particle"); }
-    Shader& getWindVectorShader(){ return getShader(windVectorShader, "Wind Vector"); }
+    Shader& getWindVectorShader() { return getShader(windVectorShader, "Wind Vector"); }
     Shader& getContaminationShader(){ return getShader(contaminationShader, "Contamination"); }
 
     // === Textures ===

@@ -96,11 +96,9 @@ namespace Callbacks {
     void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
         ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
 
-        // Jeśli ImGui chce przejąć kliknięcie – zakończ
         if (ImGui::GetIO().WantCaptureMouse)
             return;
 
-        // Twoja własna obsługa kliknięcia
         if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
             Program* program = static_cast<Program*>(glfwGetWindowUserPointer(window));
             double xpos, ypos;

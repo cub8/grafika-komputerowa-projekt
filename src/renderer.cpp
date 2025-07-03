@@ -39,12 +39,10 @@ namespace Renderer {
         Shader &shader = program->getPlaneShader();
         Object &plane = program->getPlane();
 
-        // slot 0 - map
         glActiveTexture(GL_TEXTURE0);
         program->getTexture3().bindTexture(GL_TEXTURE0);
         shader.setInt("Tex", 0);
 
-        // slot 1 - contamination
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, program->contaminationMask.getTextureID());
         shader.setInt("ContaminationTex", 1);
@@ -54,7 +52,6 @@ namespace Renderer {
         auto view = program->getCamera().GetViewMatrix();
         shader.setMat4("view", view);
         shader.setMat4("projection", buildProjectionMatrix(program));
-
         
         auto model = glm::mat4(1.0f);
         auto modelScale = glm::vec3(WorldConstraints::SCALE, 1.0f, WorldConstraints::SCALE);
@@ -130,8 +127,6 @@ namespace Renderer {
         glm::mat4 view       = program->camera.GetViewMatrix();
         glm::mat4 projection = buildProjectionMatrix(program);
 
-        // 2D ground contamination     
-
         float realLEFT = -WorldConstraints::SCALE * WorldConstraints::ASPECT_RATIO;
         float realRIGHT = WorldConstraints::SCALE * WorldConstraints::ASPECT_RATIO;
         float realBOTTOM = WorldConstraints::SCALE;
@@ -155,8 +150,6 @@ namespace Renderer {
         program->particleSystem.draw();
 
         program->contaminationMask.unbind();
-
-        // 3D particles
 
         program->getPsTexture().bindTexture(GL_TEXTURE0);
         program->getParticleShader().use();

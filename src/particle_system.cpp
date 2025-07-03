@@ -6,7 +6,6 @@ void ParticleSystem::initialize() {
 }
 
 void ParticleSystem::initGLResources() {
-    // quad vertices (x, y)
     float quadVerts[] = {
         -0.5f, -0.5f,
          0.5f, -0.5f,
@@ -14,11 +13,9 @@ void ParticleSystem::initGLResources() {
          0.5f,  0.5f
     };
 
-    //VAO
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
 
-    //Quad VBO
     glGenBuffers(1, &quadVBO);
     glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(quadVerts), quadVerts, GL_STATIC_DRAW);
@@ -28,20 +25,16 @@ void ParticleSystem::initGLResources() {
     glGenBuffers(1, &vboInstance);
     glBindBuffer(GL_ARRAY_BUFFER, vboInstance);
 
-    // allocate empty buffer initially
     glBufferData(GL_ARRAY_BUFFER, sizeof(InstanceData) * maxParticles, NULL, GL_STREAM_DRAW);
 
-    // pos 
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(InstanceData), (void *)offsetof(InstanceData, pos));
     glVertexAttribDivisor(1, 1);
 
-    // intensity (float)
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, sizeof(InstanceData), (void *)offsetof(InstanceData, intensity));
     glVertexAttribDivisor(2, 1);
 
-    // scale
     glEnableVertexAttribArray(3);
     glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(InstanceData), (void *)offsetof(InstanceData, scale));
     glVertexAttribDivisor(3, 1);
@@ -68,7 +61,6 @@ void ParticleSystem::emit(const glm::vec3 &sourcePos, int powerMW) {
     for (int i = 0; i < count; ++i) {
         Particle p;
 
-        // random start position 
         glm::vec3 posOffset = glm::vec3(
             glm::linearRand(-0.5f, 0.5f),
             glm::linearRand(-0.3f, 0.3f),
@@ -90,7 +82,7 @@ void ParticleSystem::emit(const glm::vec3 &sourcePos, int powerMW) {
         p.velocity = glm::linearRand(0.1f, 0.3f);
         p.life = glm::linearRand(minLife, maxLife);
         p.intensity = 50.0f;
-        p.scale = glm::linearRand(minSize, maxSize);  // scale from powerMW
+        p.scale = glm::linearRand(minSize, maxSize);
 
         particles.push_back(p);
 

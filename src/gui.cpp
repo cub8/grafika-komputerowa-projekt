@@ -86,6 +86,4 @@ void Gui::render(Program *program) {
     }
 
     ImGui::End();
-
-
 }
